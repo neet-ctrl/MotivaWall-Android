@@ -1,9 +1,6 @@
 name: Release ARM64 APK
 
 on:
-  push:
-    tags:
-      - "v*"
   workflow_dispatch:
 
 permissions:
