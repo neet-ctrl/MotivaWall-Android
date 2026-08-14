@@ -1,0 +1,751 @@
+🚀 MotivaWall - Premium Motivational Lock Screen Wallpaper App
+
+Complete Replit Agent Prompt - FOCUSED VERSION
+
+---
+
+📱 APP IDENTITY
+
+· App Name: MotivaWall
+· Tagline: "Transform Your Lock Screen Into Daily Inspiration"
+· App Icon: Minimalist lock icon with rising sun gradient (🔒 + 🌅)
+· Color Palette:
+  · Primary: #0A0A1A (Deep midnight)
+  · Secondary: #6C63FF (Premium purple)
+  · Accent: #FF6B6B (Soft coral)
+  · Surface: #1A1A2E (Dark glass)
+  · Gradient: #6C63FF → #3F3D9E
+
+---
+
+🛠️ TECHNOLOGY STACK
+
+· Language: Kotlin (100%)
+· Minimum SDK: Android 7.0 (API 24)
+· Target SDK: Android 14 (API 34)
+· Architecture: MVVM + Clean Architecture
+· UI Framework: Jetpack Compose (100% Compose)
+· Libraries:
+  · Jetpack Compose Material 3
+  · Hilt (Dependency Injection)
+  · Room (Local Database)
+  · Coil (Image Loading with caching)
+  · PdfRenderer (Android native)
+  · WorkManager (Background tasks)
+  · Accompanist (System UI, Permissions)
+  · Lottie Compose (Animations)
+  · Kotlin Coroutines + Flow
+
+---
+
+✨ PREMIUM UI FEATURES
+
+· Glassmorphism Effect: Frosted glass cards with backdrop blur
+· Neumorphism Elements: Soft extruded buttons
+· Micro-interactions: Every tap has subtle haptic and visual feedback
+· Parallax Scrolling: Depth effect in lists
+· Morphing Transitions: Smooth shape changes between screens
+· Dynamic Color: Follows Android 12+ Material You theming
+· Animated Gradients: Living, breathing backgrounds
+· Skeleton Loading: Premium placeholder animations
+
+---
+
+✨ CORE FEATURES (ONLY FROM STORAGE - NO DOWNLOADS)
+
+1️⃣ Set Images from Storage as Lock Screen Wallpaper
+
+· Browse and select images from device gallery/storage
+· Smart crop with 10+ aspect ratios (16:9, 18:9, 20:9, 4:3, 1:1)
+· Real-time blur effect with adjustable intensity (0-100%)
+· Dark overlay option for better text readability
+· Set both lock screen and home screen simultaneously
+· Image preview before setting
+· Recent images quick access from history
+· Favorite images for quick access
+· Set wallpaper from any folder in storage
+
+2️⃣ PDF as Wallpaper (Revolutionary Feature)
+
+· Select any PDF from device storage
+· Page-by-page auto-rotation (Page 1 → Page 2 → ... → Last)
+· Custom rotation intervals: 3s, 5s, 10s, 30s, 1min, 5min, 10min
+· Transition effects: Fade, Slide, Zoom, Flip, Morph
+· Full-page preview with smooth scrolling
+· Resume from last viewed page on app restart
+· Page indicator with progress bar on lock screen
+· Select page range (set: 5-15 pages only)
+· PDF page grid view to see all pages at once
+· Loop PDF (repeat from start after last page)
+· Rotate PDF pages (0°, 90°, 180°, 270°)
+
+3️⃣ Wallpaper Setup Features (While Setting Up)
+
+· Real-time preview before applying
+· Crop tool with custom aspect ratios
+· Rotate image (90° increments)
+· Flip image (horizontal/vertical)
+· Adjust brightness (0-100%)
+· Adjust contrast (0-100%)
+· Adjust saturation (0-100%)
+· Add vignette effect (dark edges)
+· Add simple text overlay (just quote + author - no complex editing)
+· Choose text position (Top, Center, Bottom)
+· Choose text color (White, Black, Custom)
+· Choose text size (Small, Medium, Large)
+· Choose font style (5-10 basic fonts)
+· Add watermark (optional - your name/copyright)
+· Auto-fit image to screen ratio
+· Set as wallpaper button with confirmation
+
+4️⃣ Wallpaper History & Management
+
+· History log of all wallpapers set (date, time, type)
+· Recent wallpapers (last 50)
+· Favorites (star any wallpaper)
+· Filter history by type (Image/PDF)
+· Delete history items
+· Clear all history with confirmation
+· Export history as JSON (backup)
+
+5️⃣ Smart Scheduling (From Your Storage)
+
+· Schedule wallpaper changes from your storage
+· Time-based automation:
+  · Set specific times (8:00 AM, 12:00 PM, 6:00 PM)
+  · Select which image/PDF for each time
+  · Auto-rotate at scheduled times
+· Day-specific schedules (Monday, Tuesday, etc.)
+· Repeat daily/weekly schedules
+· Pause schedules temporarily
+· Battery optimization (pause when <15%)
+· View upcoming schedules in calendar view
+
+6️⃣ Premium UI Components
+
+· Animated Tab Bar: With morphing icons (4 tabs)
+· 3D Carousel: For wallpaper preview
+· Parallax Header: With collapsing toolbar
+· Morphing FAB: Changes shape based on context
+· Swipe to dismiss: With spring animation
+· Drag to reorder: In favorites and collections
+· Particle effects: Floating stars, sparkles on interactions
+· Confetti animation: On setting new wallpaper
+· Glass notification: In-app toast with blur background
+
+---
+
+📦 SCREENS & NAVIGATION
+
+Bottom Navigation (4 Tabs)
+
+Screen 1: Home Dashboard
+
+```
+┌─────────────────────────────────────┐
+│  🔒 MotivaWall          ⚙️          │  ← Top Bar
+├─────────────────────────────────────┤
+│  [Current Wallpaper Preview]        │  ← Full width
+│  ✨ Live preview with blur          │
+│  📅 "Your wallpaper here"           │  ← Overlay text if added
+├─────────────────────────────────────┤
+│  📸 Set New Wallpaper    ⚡ Quick   │  ← Main CTA
+│  📄 PDF as Wallpaper     🔄 Random │  
+├─────────────────────────────────────┤
+│  🎯 Quick Actions:                  │
+│  [Crop] [Rotate] [Adjust] [Text]    │
+├─────────────────────────────────────┤
+│  📊 Today's Activity:               │
+│  Set 3 wallpapers today             │
+│  ⭐ 5 favorites saved               │
+├─────────────────────────────────────┤
+│  🕐 Scheduled Today: 8AM, 12PM     │  ← Upcoming
+└─────────────────────────────────────┘
+```
+
+Screen 2: PDF Wallpaper Setup
+
+```
+┌─────────────────────────────────────┐
+│  ← Back        📄 PDF Wallpaper     │
+├─────────────────────────────────────┤
+│  ┌───────────────────────────┐     │
+│  │  [Page 1 Preview]         │     │  ← Swipeable
+│  │  ═══════════════════════  │     │
+│  │  1/20                     │     │
+│  └───────────────────────────┘     │
+├─────────────────────────────────────┤
+│  ⏱️ Rotation Interval     [10s ▼]  │
+│  🔄 Transition Effect    [Fade ▼]  │
+│  📍 Start Page           [1   ▼]   │
+│  📍 End Page             [20  ▼]   │
+│  🔁 Loop                 [Toggle]   │
+│  🔄 Rotate PDF           [0° ▼]    │
+├─────────────────────────────────────┤
+│  📚 Page Grid (All pages)          │  ← Grid view
+│  [1] [2] [3] [4] [5] [6] [7] [8]   │
+│  [9] [10] [11] [12] [13] [14] [15] │
+├─────────────────────────────────────┤
+│  ✨ Set as Wallpaper               │  ← Big CTA
+└─────────────────────────────────────┘
+```
+
+Screen 3: Wallpaper Setup (While Setting)
+
+```
+┌─────────────────────────────────────┐
+│  ← Back     📸 Set Wallpaper        │
+├─────────────────────────────────────┤
+│  ┌───────────────────────────┐     │
+│  │  [Image Preview]          │     │
+│  │  Live preview with edits  │     │
+│  └───────────────────────────┘     │
+├─────────────────────────────────────┤
+│  ✂️ Crop: [16:9] [18:9] [4:3]      │  ← Aspect ratios
+│  🔄 Rotate: [90°] [180°] [270°]    │
+│  ↔️ Flip: [H] [V]                  │
+├─────────────────────────────────────┤
+│  🎨 Adjustments:                   │
+│  Brightness ────────●───── 75%    │
+│  Contrast  ──────●─────── 60%     │
+│  Saturation ──●───────── 40%      │
+│  Vignette  ─────────●─── 30%      │
+├─────────────────────────────────────┤
+│  📝 Text Overlay:                  │
+│  [Enter quote text]               │
+│  Author: [Optional]               │
+│  Position: [Top ▼] [Center] [Bot] │
+│  Color:   [White ▼] [Black] [Cus]│
+│  Size:    [Small] [Med] [Large]  │
+│  Font:    [Poppins ▼]             │
+├─────────────────────────────────────┤
+│  💾 Set as Lock Screen             │  ← Set button
+│  💾 Set as Home Screen             │
+│  💾 Set Both                       │
+└─────────────────────────────────────┘
+```
+
+Screen 4: History & Favorites
+
+```
+┌─────────────────────────────────────┐
+│  ← Back       📚 History           │
+├─────────────────────────────────────┤
+│  [⭐ Favorites] 24  [🗑️ Clear All] │
+├─────────────────────────────────────┤
+│  Tabs: [All] [Images] [PDF]        │
+├─────────────────────────────────────┤
+│  Grid View:                         │
+│  ┌────┐ ┌────┐ ┌────┐ ┌────┐    │
+│  │🖼️  │ │🖼️  │ │🖼️  │ │🖼️  │    │
+│  │⭐   │ │⭐   │ │     │ │⭐   │    │
+│  └────┘ └────┘ └────┘ └────┘    │
+│  ┌────┐ ┌────┐ ┌────┐ ┌────┐    │
+│  │🖼️  │ │📄  │ │🖼️  │ │📄  │    │
+│  │     │ │⭐   │ │     │ │     │    │
+│  └────┘ └────┘ └────┘ └────┘    │
+├─────────────────────────────────────┤
+│  📊 Stats:                         │
+│  Total wallpapers set: 156         │
+│  Most used: PDFs (45)              │
+│  Last set: Today 2:30 PM           │
+└─────────────────────────────────────┘
+```
+
+Screen 5: Settings & Schedules
+
+```
+┌─────────────────────────────────────┐
+│  ← Back       ⚙️ Settings          │
+├─────────────────────────────────────┤
+│  🎨 Theme:        [Dark] [Light]   │
+│  🌈 Dynamic Color: [Toggle]        │
+│  💫 Animations:   [Toggle]         │
+│  🔔 Notifications: [Toggle]        │
+├─────────────────────────────────────┤
+│  ⏰ Schedules:                     │
+│  ┌─────────────────────────┐      │
+│  │ 8:00 AM  - Morning.pdf │      │
+│  │ 12:00 PM - Focus.jpg   │      │
+│  │ 6:00 PM  - Sunset.pdf  │      │
+│  └─────────────────────────┘      │
+│  [+ Add Schedule]                  │
+├─────────────────────────────────────┤
+│  📂 Storage:                       │
+│  Clear Cache: 125MB               │
+│  Export History: [JSON]           │
+│  Import History: [JSON]           │
+├─────────────────────────────────────┤
+│  ℹ️ About | 📧 Feedback | ⭐ Rate  │
+└─────────────────────────────────────┘
+```
+
+---
+
+🎨 ANIMATIONS & TRANSITIONS
+
+Animation Type Duration Trigger
+Fade In/Out Opacity 300ms Screen transition
+Slide Up Translation 400ms Bottom sheet show
+Morphing Shape change 500ms Tab switch
+Spring Elastic 600ms Button press
+Staggered Sequential 50ms/item List appearance
+Shimmer Gradient pulse 1500ms Loading state
+Particle Random Continuous On wallpaper set
+Parallax 3D move Dynamic Scroll
+Breathing Scale pulse 2000ms FAB animation
+Confetti Random 2000ms On successful set
+
+---
+
+🗄️ DATABASE SCHEMA (Room)
+
+Table: wallpaper_history
+
+```kotlin
+@Entity(tableName = "wallpaper_history")
+data class WallpaperEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val imagePath: String,              // Local storage path
+    val thumbnailPath: String,          // Compressed thumbnail
+    val dateSet: Long,                  // Timestamp
+    val isFavorite: Boolean = false,
+    val isPDF: Boolean = false,
+    val pdfPageNumber: Int = 0,
+    val pdfTotalPages: Int = 0,
+    val pdfRotation: Int = 0,           // 0, 90, 180, 270
+    val brightness: Float = 1.0f,
+    val contrast: Float = 1.0f,
+    val saturation: Float = 1.0f,
+    val vignette: Float = 0.0f,
+    val textOverlay: String?,           // Custom quote
+    val textAuthor: String?,            // Author name
+    val textColor: String = "#FFFFFF",
+    val textSize: String = "Medium",
+    val textPosition: String = "Center",
+    val fontStyle: String = "Poppins",
+    val cropRatio: String = "16:9"
+)
+```
+
+Table: schedules
+
+```kotlin
+@Entity(tableName = "schedules")
+data class ScheduleEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val time: String,                   // "08:00"
+    val days: String,                   // "Mon,Wed,Fri" or "Daily"
+    val wallpaperId: Long,              // Reference to wallpaper_history
+    val isActive: Boolean = true,
+    val label: String?                  // "Morning", "Focus", etc.
+)
+```
+
+---
+
+🔐 PERMISSIONS REQUIRED
+
+```xml
+<!-- Storage Access -->
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+<uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+<uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+
+<!-- Wallpaper Setting -->
+<uses-permission android:name="android.permission.SET_WALLPAPER" />
+<uses-permission android:name="android.permission.SET_LOCK_WALLPAPER" />
+
+<!-- Background -->
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+<uses-permission android:name="android.permission.WAKE_LOCK" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+<!-- Enhanced -->
+<uses-permission android:name="android.permission.VIBRATE" />
+<uses-permission android:name="android.permission.INTERNET" /> <!-- Only for fonts -->
+```
+
+---
+
+🧪 TESTING SCENARIOS
+
+Functional Tests
+
+1. Image Wallpaper: Select image from storage → Crop → Adjust → Apply → Verify lock screen changes instantly
+2. PDF Wallpaper: Select PDF → Set pages 1-10 → Verify rotation every 5 seconds
+3. Text Overlay: Add text → Change position/color/size → Verify rendering on preview
+4. Scheduling: Set time 8:00 AM with an image → Verify auto-change at correct time
+5. History: Set 5 wallpapers → Verify all show in history with correct metadata
+6. Favorites: Star a wallpaper → Check in favorites section
+7. Adjustments: Apply brightness/contrast → Verify preview updates
+8. Crop: Select different ratios → Verify image crops correctly
+
+Performance Tests
+
+· Launch time: < 2 seconds on mid-range device
+· Memory usage: < 150MB during normal operation
+· Battery consumption: < 3% per hour background
+· PDF rendering: 60 FPS during page rotation
+· Image loading: < 500ms for 4K images
+
+Edge Cases
+
+· No storage permission → Show proper error dialog
+· Empty PDF → Show error message
+· Corrupted image → Show graceful error
+· Background killed → Restore state on resume
+· Rotation configuration change → Preserve state
+· Large PDF (100+ pages) → Optimized loading
+· Schedule overlap → Prioritize latest
+
+---
+
+📁 PROJECT STRUCTURE
+
+```
+app/
+├── src/
+│   ├── main/
+│   │   ├── java/com/motivawall/
+│   │   │   ├── data/
+│   │   │   │   ├── local/         (Room entities, DAOs)
+│   │   │   │   └── repository/    (Data sources)
+│   │   │   ├── domain/
+│   │   │   │   ├── models/        (Data classes)
+│   │   │   │   └── usecases/      (Business logic)
+│   │   │   ├── presentation/
+│   │   │   │   ├── ui/
+│   │   │   │   │   ├── home/
+│   │   │   │   │   ├── pdf/
+│   │   │   │   │   ├── setup/     (Wallpaper setup screen)
+│   │   │   │   │   ├── history/
+│   │   │   │   │   └── settings/
+│   │   │   │   ├── viewmodel/     (ViewModels)
+│   │   │   │   └── composables/   (Reusable UI)
+│   │   │   ├── utils/
+│   │   │   │   ├── wallpaper/     (Wallpaper setter)
+│   │   │   │   ├── pdf/          (PDF renderer)
+│   │   │   │   ├── adjustments/  (Image adjustments)
+│   │   │   │   └── permissions/  (Permission handling)
+│   │   │   └── di/               (Hilt modules)
+│   │   ├── res/
+│   │   │   ├── drawable/         (Icons, vectors)
+│   │   │   ├── font/             (Custom fonts)
+│   │   │   ├── lottie/           (Animation JSONs)
+│   │   │   └── values/           (Colors, themes)
+│   │   └── assets/               (Default resources)
+│   └── test/                     (Unit tests)
+└── build.gradle.kts
+```
+
+---
+
+📦 BUILD CONFIGURATION
+
+build.gradle.kts (Module)
+
+```kotlin
+android {
+    namespace = "com.motivawall"
+    compileSdk = 34
+    
+    defaultConfig {
+        applicationId = "com.motivawall"
+        minSdk = 24
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0.0"
+    }
+    
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+    
+    buildFeatures {
+        compose = true
+    }
+    
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.4"
+    }
+}
+
+dependencies {
+    // Core
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    
+    // Compose
+    implementation(platform("androidx.compose:compose-bom:2023.10.01"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.activity:activity-compose:1.8.0")
+    
+    // Navigation
+    implementation("androidx.navigation:navigation-compose:2.7.5")
+    
+    // Dependency Injection
+    implementation("com.google.dagger:hilt-android:2.48")
+    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+    
+    // Database
+    implementation("androidx.room:room-runtime:2.6.0")
+    implementation("androidx.room:room-ktx:2.6.0")
+    
+    // Image Loading
+    implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("io.coil-kt:coil-gif:2.5.0")
+    
+    // Background
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    
+    // Accompanist
+    implementation("com.google.accompanist:accompanist-permissions:0.32.0")
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
+    
+    // Lottie
+    implementation("com.airbnb.android:lottie-compose:6.1.0")
+    
+    // PDF
+    implementation("com.github.barteksc:android-pdf-viewer:3.2.0-beta.1")
+    
+    // Image Processing
+    implementation("androidx.exifinterface:exifinterface:1.3.6")
+}
+```
+
+---
+
+🎯 COMPLETE PROMPT FOR REPLIT AGENT
+
+```
+Build a premium Android wallpaper app called "MotivaWall" that works EXCLUSIVELY with user's local storage (no downloads, no external content).
+
+## CORE REQUIREMENTS
+
+### 1. Set Images from Storage as Wallpaper
+- User selects images from device storage/gallery
+- Crop with multiple aspect ratios (16:9, 18:9, 20:9, 4:3, 1:1)
+- Rotate image (90°, 180°, 270°)
+- Flip horizontally/vertically
+- Adjust brightness, contrast, saturation (sliders 0-100%)
+- Add vignette effect (dark corners)
+- Simple text overlay (just quote + author - no complex editor)
+- Text position: Top, Center, Bottom
+- Text color: White, Black, or custom hex
+- Text size: Small, Medium, Large
+- 5-10 basic fonts from resources
+- Set as Lock Screen / Home Screen / Both
+- Real-time preview with all adjustments
+
+### 2. PDF as Wallpaper
+- Select PDF from storage (any size up to 100 pages)
+- Auto-rotation: Page 1 → 2 → 3 → ... continuously
+- Intervals: 3s, 5s, 10s, 30s, 1min, 5min, 10min
+- Transition effects: Fade, Slide, Zoom, Flip, Morph
+- Full-page preview with swipe
+- Page indicator on lock screen
+- Select page range (e.g., pages 5-15 only)
+- Loop from start after last page
+- Rotate PDF pages (0°, 90°, 180°, 270°)
+- Grid view showing all pages
+- Set any single page as static wallpaper too
+
+### 3. Wallpaper Setup Features (During Setting)
+- Show image/PDF preview with live updates
+- All adjustments visible in real-time
+- Crop with preset ratios or freeform
+- Apply text overlay instantly
+- Save as favorite option
+- "Set as Wallpaper" button with confirmation
+
+### 4. History & Management
+- Track all wallpapers set with timestamp
+- Show preview thumbnails
+- Filter by type (Image/PDF)
+- Mark favorites (star system)
+- Delete individual or clear all
+- Export/Import history as JSON
+- Show statistics (total set, most used type)
+
+### 5. Scheduling (From Storage)
+- Schedule wallpaper changes from your storage
+- Set specific times (e.g., 8:00 AM, 12:00 PM)
+- Choose which image/PDF for each time
+- Day-specific schedules (Monday-Friday, Weekends, Daily)
+- Pause/Enable schedules
+- View upcoming schedule list
+- Battery optimization (pause when <15%)
+
+### 6. Premium UI/UX (Modern Design)
+- Glassmorphism (frosted glass cards)
+- Neumorphism (soft shadows, extruded buttons)
+- Micro-interactions with haptic feedback
+- Parallax scrolling
+- Morphing transitions between screens
+- Animated gradients in backgrounds
+- Lottie animations for loading
+- Confetti animation on successful set
+- Particle effects (subtle sparkles)
+
+### 7. Screens (5 screens, 4 bottom tabs)
+- **Screen 1 - Home:** Current wallpaper preview, quick actions, stats, upcoming schedules
+- **Screen 2 - PDF Setup:** PDF selection, page preview, rotation settings, interval controls
+- **Screen 3 - Setup:** Image preview, crop/rotate/adjust tools, text overlay, set buttons
+- **Screen 4 - History:** Grid view of all wallpapers, favorites, filters, delete, stats
+- **Screen 5 - Settings:** Theme (Dark/Light/Dynamic), schedules management, cache, about
+
+### 8. Database (Room)
+- **wallpaper_history:** id, imagePath, thumbnailPath, dateSet, isFavorite, isPDF, pdfPageNumber, pdfTotalPages, brightness, contrast, saturation, vignette, textOverlay, textAuthor, textColor, textSize, textPosition, fontStyle, cropRatio
+- **schedules:** id, time, days, wallpaperId (foreign key), isActive, label
+
+### 9. Permissions
+- READ_MEDIA_IMAGES (Android 13+)
+- READ_EXTERNAL_STORAGE (Android 12 and below)
+- SET_WALLPAPER, SET_LOCK_WALLPAPER
+- RECEIVE_BOOT_COMPLETED (for schedules)
+- POST_NOTIFICATIONS
+- VIBRATE
+- FOREGROUND_SERVICE
+
+### 10. Tech Stack
+- Kotlin (100%)
+- Jetpack Compose with Material 3
+- MVVM + Clean Architecture
+- Hilt for DI
+- Room for database
+- Coil for image loading
+- PdfRenderer for PDFs (or PDFViewer library)
+- WorkManager for scheduling
+- Accompanist for permissions/system UI
+- Lottie Compose for animations
+
+### 11. Animations Required
+- Fade transitions between screens (300ms)
+- Spring animations on button presses (600ms)
+- Staggered grid appearance (50ms per item)
+- Shimmer loading effect
+- Confetti on wallpaper set
+- Particle sparkles on interactions
+
+### 12. Testing
+- Set image from storage → Verify lock screen updates
+- Set PDF → Verify auto-rotation works at set interval
+- Apply adjustments → Verify preview updates instantly
+- Schedule at 8AM → Verify auto-change occurs
+- History shows all set wallpapers
+- Favorites work correctly
+- Permission denial → Show proper UI message
+- Large PDF (50+ pages) → Performant scrolling
+
+## DELIVERABLES
+1. Complete Kotlin source code with MVVM structure
+2. Signed APK (minSdk 24, targetSdk 34)
+3. 1024x1024 app icon (lock + sunrise gradient)
+4. README.md with build instructions
+5. Sample database with test data
+6. All vector assets (SVG icons)
+7. Lottie animation JSON files
+8. 5-10 font files (.ttf)
+
+## DESIGN GUIDELINES
+- Dark theme by default with premium glassmorphism
+- Color palette: #0A0A1A (primary), #6C63FF (secondary), #FF6B6B (accent)
+- Smooth animations throughout
+- Haptic feedback on all interactions
+- Responsive for phones and tablets
+- Accessibility support (TalkBack, large text)
+- Minimum 60fps UI performance
+
+## ADDITIONAL REQUIREMENTS
+- NO external content downloads (only user's storage)
+- NO paywalls or subscriptions (100% free)
+- NO ads
+- Proper error handling with user-friendly messages
+- Memory-efficient (cache thumbnails, not full images)
+- Background service for scheduled updates
+- Battery efficient (WorkManager with constraints)
+- Proper logging for debugging
+
+Generate a complete, production-ready app with clean code, proper documentation, and all resources included. The app should feel premium, smooth, and professional with no bugs.
+
+IMPORTANT: This app only works with user's local storage. No downloads, no external APIs, no content fetching. Everything is from the device storage.
+```
+
+---
+
+🎨 SAMPLE APP ICON DESCRIPTION
+
+```
+Create a 1024x1024 PNG app icon with:
+- Golden lock icon (🔒) with subtle glow effect
+- Rising sun gradient background (deep purple to warm orange)
+- Rounded square shape with subtle shadow
+- Colors: #6C63FF (purple), #FF6B6B (coral), #FFD93D (gold)
+- Glassmorphism effect (slight transparency)
+- 3D depth with drop shadow
+- Clean, minimalist, premium look
+```
+
+---
+
+📝 README.md TEMPLATE
+
+```markdown
+# MotivaWall - Premium Wallpaper App
+
+## 🚀 Features
+- ✅ Set images from storage as lock screen wallpaper
+- ✅ PDF as wallpaper with auto-page rotation
+- ✅ Crop, rotate, adjust brightness/contrast/saturation
+- ✅ Simple text overlay with quotes
+- ✅ Wallpaper scheduling from storage
+- ✅ History and favorites management
+- ✅ Premium glassmorphism UI
+- ✅ 100% FREE - No ads, no subscriptions
+
+## 📱 Screenshots
+[Add screenshots here]
+
+## 🛠️ Tech Stack
+- Kotlin + Coroutines
+- Jetpack Compose
+- MVVM + Clean Architecture
+- Room Database
+- Hilt DI
+
+## 📦 Installation
+1. Download APK from releases
+2. Enable "Install from unknown sources"
+3. Install and enjoy!
+
+## 🔧 Build from Source
+```bash
+git clone https://github.com/yourusername/motivawall.git
+cd motivawall
+./gradlew assembleRelease
+```
+
+📄 License
+
+MIT License
+
+```
+
+---
+
+**This is your FINAL, FOCUSED prompt for Replit Agent. NO content downloads, NO external APIs, NO complex editors. Just your storage images and PDFs with premium UI while setting up.** 🎉
