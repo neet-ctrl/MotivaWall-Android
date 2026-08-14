@@ -24,11 +24,15 @@ data class ImageEdits(
     val contrast: Int = 50,
     val saturation: Int = 50,
     val vignette: Int = 0,
+    val blur: Int = 0,
+    val darkOverlay: Int = 0,
     val quote: String = "",
     val author: String = "",
     val textPosition: String = "Center",
     val textColor: String = "#FFFFFF",
-    val textSize: String = "Medium"
+    val textSize: String = "Medium",
+    val fontStyle: String = "Sans Serif",
+    val watermark: String = ""
 )
 
 object ImageProcessor {
@@ -93,6 +97,26 @@ object ImageProcessor {
             canvas.drawRect(0f, 0f, output.width.toFloat(), output.height.toFloat(), vignettePaint)
         }
 
+        if (edits.blur > 0) {
+            // A small intermediate bitmap provides a fast, device-compatible blur
+            // without relying on deprecated RenderScript APIs.
+            val factor = (1f - edits.blur / 100f).coerceIn(.08f, 1f)
+            val small = Bitmap.createScaledBitmap(
+                output,
+                (output.width * factor).toInt().coerceAtLeast(1),
+                (output.height * factor).toInt().coerceAtLeast(1),
+                true
+            )
+            val blurred = Bitmap.createScaledBitmap(small, output.width, output.height, true)
+            canvas.drawBitmap(blurred, 0f, 0f, Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
+            if (small !== blurred) small.recycle()
+            if (blurred !== output) blurred.recycle()
+        }
+
+        if (edits.darkOverlay > 0) {
+            canvas.drawColor(Color.argb((edits.darkOverlay * 2.55f).toInt(), 0, 0, 0))
+        }
+
         if (edits.quote.isNotBlank()) {
             val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = try { Color.parseColor(edits.textColor) } catch (_: Exception) { Color.WHITE }
@@ -126,6 +150,20 @@ object ImageProcessor {
                 textPaint.textSize *= .55f
                 canvas.drawText("— ${edits.author}", x, y + lines.size * textPaint.textSize * 1.7f, textPaint)
             }
+        }
+        if (edits.watermark.isNotBlank()) {
+            val watermarkPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.argb(190, 255, 255, 255)
+                textAlign = Paint.Align.RIGHT
+                textSize = output.width * .032f
+                setShadowLayer(8f, 0f, 2f, Color.BLACK)
+            }
+            canvas.drawText(
+                edits.watermark,
+                output.width * .94f,
+                output.height * .94f,
+                watermarkPaint
+            )
         }
         return output
     }

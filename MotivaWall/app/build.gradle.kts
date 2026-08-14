@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.motivawall.app"
+    namespace = "com.motivawall"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.motivawall.app"
+        applicationId = "com.motivawall"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -47,8 +47,12 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             signingConfig = signingConfigs.getByName("release")
         }
     }

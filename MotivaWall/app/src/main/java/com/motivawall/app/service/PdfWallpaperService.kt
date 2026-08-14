@@ -9,7 +9,7 @@ import android.graphics.Bitmap
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import com.motivawall.app.R
+import com.motivawall.R
 import com.motivawall.app.core.PdfTransition
 import com.motivawall.app.core.PdfWallpaperController
 
@@ -44,6 +44,7 @@ class PdfWallpaperService : Service() {
                 val end = prefs.getInt("end", (total - 1).coerceAtLeast(0)).coerceIn(start, (total - 1).coerceAtLeast(start))
                 val interval = prefs.getLong("interval", 10_000L).coerceAtLeast(3_000L)
                 val paused = prefs.getBoolean("paused", false)
+                val loop = prefs.getBoolean("loop", true)
                 if (path == null || total == 0 || paused) {
                     Thread.sleep(500L)
                     continue
@@ -63,6 +64,10 @@ class PdfWallpaperService : Service() {
                     android.app.WallpaperManager.FLAG_LOCK or android.app.WallpaperManager.FLAG_SYSTEM
                 )
                 sendPageUpdate(page, total, start, end)
+                if (!loop && page >= end) {
+                    prefs.edit().putBoolean("paused", true).apply()
+                    continue
+                }
                 val nextPage = if (page >= end) start else page + 1
                 prefs.edit().putInt("page", nextPage).apply()
                 var slept = 0L

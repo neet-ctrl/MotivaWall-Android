@@ -27,7 +27,7 @@ import android.widget.TextView
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.motivawall.app.MainActivity
-import com.motivawall.app.R
+import com.motivawall.R
 import com.motivawall.app.core.PdfTransition
 import com.motivawall.app.core.PdfWallpaperController
 
@@ -151,6 +151,12 @@ class PdfLockScreenDialogService : Service() {
             addView(actionButton("Previous") { changePage(-1) }, weightedParams())
             addView(actionButton(if (paused) "Play" else "Pause", "pause") { togglePause() }, weightedParams())
             addView(actionButton("Next") { changePage(1) }, weightedParams())
+            addView(actionButton("Settings") {
+                startActivity(
+                    Intent(this@PdfLockScreenDialogService, MainActivity::class.java)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                )
+            }, weightedParams())
         }
         val close = TextView(this).apply {
             text = "×"

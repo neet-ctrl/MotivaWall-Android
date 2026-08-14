@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
-    <uses-permission android:name="android.permission.SET_WALLPAPER_HINTS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -13,14 +15,16 @@
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
     <application
-        android:name=".MotivaWallApplication"
+        android:name="com.motivawall.app.MotivaWallApplication"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
+        android:hardwareAccelerated="true"
+        android:usesCleartextTraffic="false"
         android:supportsRtl="true"
         android:theme="@style/Theme.MotivaWall">
         <activity
-            android:name=".MainActivity"
+            android:name="com.motivawall.app.MainActivity"
             android:exported="true"
             android:showWhenLocked="true"
             android:screenOrientation="portrait">
@@ -31,18 +35,21 @@
         </activity>
 
         <service
-            android:name=".service.PdfWallpaperService"
+            android:name="com.motivawall.app.service.PdfWallpaperService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
         <service
-            android:name=".service.PdfLockScreenDialogService"
+            android:name="com.motivawall.app.service.PdfLockScreenDialogService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
         <receiver
-            android:name=".service.ScheduleReceiver"
+            android:name="com.motivawall.app.service.ScheduleReceiver"
             android:exported="false" />
         <receiver
-            android:name=".service.BootReceiver"
+            android:name="com.motivawall.app.service.PdfControlReceiver"
+            android:exported="false" />
+        <receiver
+            android:name="com.motivawall.app.service.BootReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>

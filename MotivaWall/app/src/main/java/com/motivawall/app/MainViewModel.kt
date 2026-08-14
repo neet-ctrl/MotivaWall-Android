@@ -39,6 +39,7 @@ data class SetupState(
     val intervalMs: Long = 10_000L,
     val transition: String = "Fade",
     val autoRotate: Boolean = true,
+    val loopPdf: Boolean = true,
     val favorite: Boolean = false,
     val edits: ImageEdits = ImageEdits(),
     val target: WallpaperTarget = WallpaperTarget.BOTH,
@@ -56,6 +57,13 @@ class MainViewModel @Inject constructor(
         application.getSharedPreferences("settings", Context.MODE_PRIVATE).getString("theme", "Dark") ?: "Dark"
     )
     val theme: StateFlow<String> = _theme.asStateFlow()
+    private val settingsPrefs = application.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    private val _dynamicColor = MutableStateFlow(settingsPrefs.getBoolean("dynamicColor", true))
+    val dynamicColor: StateFlow<Boolean> = _dynamicColor.asStateFlow()
+    private val _animations = MutableStateFlow(settingsPrefs.getBoolean("animations", true))
+    val animations: StateFlow<Boolean> = _animations.asStateFlow()
+    private val _notifications = MutableStateFlow(settingsPrefs.getBoolean("notifications", true))
+    val notifications: StateFlow<Boolean> = _notifications.asStateFlow()
     val history = dao.observeHistory()
     val schedules = dao.observeSchedules()
 
@@ -106,12 +114,24 @@ class MainViewModel @Inject constructor(
     fun setTarget(target: WallpaperTarget) { _setup.value = _setup.value.copy(target = target) }
     fun setTheme(theme: String) {
         _theme.value = theme
-        getApplication<Application>().getSharedPreferences("settings", Context.MODE_PRIVATE)
-            .edit().putString("theme", theme).apply()
+        settingsPrefs.edit().putString("theme", theme).apply()
+    }
+    fun setDynamicColor(enabled: Boolean) {
+        _dynamicColor.value = enabled
+        settingsPrefs.edit().putBoolean("dynamicColor", enabled).apply()
+    }
+    fun setAnimations(enabled: Boolean) {
+        _animations.value = enabled
+        settingsPrefs.edit().putBoolean("animations", enabled).apply()
+    }
+    fun setNotifications(enabled: Boolean) {
+        _notifications.value = enabled
+        settingsPrefs.edit().putBoolean("notifications", enabled).apply()
     }
     fun setInterval(intervalMs: Long) { _setup.value = _setup.value.copy(intervalMs = intervalMs) }
     fun setTransition(transition: String) { _setup.value = _setup.value.copy(transition = transition) }
     fun setAutoRotate(autoRotate: Boolean) { _setup.value = _setup.value.copy(autoRotate = autoRotate) }
+    fun setLoopPdf(loopPdf: Boolean) { _setup.value = _setup.value.copy(loopPdf = loopPdf) }
     fun setFavorite(favorite: Boolean) { _setup.value = _setup.value.copy(favorite = favorite) }
     fun setPageRange(start: Int, end: Int) {
         val state = _setup.value
@@ -176,6 +196,8 @@ class MainViewModel @Inject constructor(
             .putInt("rotation", state.edits.rotation)
             .putString("transition", state.transition)
             .putBoolean("paused", false)
+            .putBoolean("autoRotate", state.autoRotate)
+            .putBoolean("loop", state.loopPdf)
             .putLong("interval", state.intervalMs)
             .apply()
         ContextCompat.startForegroundService(getApplication(), Intent(getApplication(), PdfWallpaperService::class.java))
