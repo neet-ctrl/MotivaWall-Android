@@ -1,0 +1,486 @@
+[2026-08-14 11:15:14.455 Uid(value=10255):9595:9595 E/AndroidRuntime]
+FATAL EXCEPTION: main
+Process: com.motivawall, PID: 9595
+java.lang.IllegalStateException: Given component holder class com.motivawall.app.MainActivity does not implement class y1.e or interface G1.a
+	at j1.y.x(SourceFile:65)
+	at D1.b.d(SourceFile:3)
+	at y1.h.a(SourceFile:179)
+	at y1.a.h(SourceFile:1166)
+	at G.c.h(SourceFile:52)
+	at i0.j0.a(SourceFile:70)
+	at I.u.h(SourceFile:344)
+	at G.c.h(SourceFile:52)
+	at z.d.b(SourceFile:150)
+	at i0.k0.a(SourceFile:309)
+	at i0.N.h(SourceFile:32)
+	at G.c.h(SourceFile:52)
+	at z.d.b(SourceFile:150)
+	at i0.S.a(SourceFile:611)
+	at i0.i1.h(SourceFile:242)
+	at G.c.h(SourceFile:52)
+	at z.d.a(SourceFile:233)
+	at i0.i1.h(SourceFile:213)
+	at G.c.h(SourceFile:52)
+	at z.d.C(SourceFile:15)
+	at z.o.n(SourceFile:203)
+	at z.s.k(SourceFile:32)
+	at z.o0.a(SourceFile:45)
+	at z.s.l(SourceFile:9)
+	at z.s.d(SourceFile:3)
+	at R.K.j(SourceFile:203)
+	at i0.t.setOnViewTreeOwnersAvailable(SourceFile:7)
+	at i0.j1.d(SourceFile:9)
+	at i0.j1.i(SourceFile:19)
+	at androidx.lifecycle.u.a(SourceFile:23)
+	at androidx.lifecycle.v.a(SourceFile:216)
+	at R.K.j(SourceFile:172)
+	at i0.t.onAttachedToWindow(SourceFile:120)
+	at android.view.View.dispatchAttachedToWindow(View.java:23246)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3582)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:4089)
+	at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:3473)
+	at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:11900)
+	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:2011)
+	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:2020)
+	at android.view.Choreographer.doCallbacks(Choreographer.java:1583)
+	at android.view.Choreographer.doFrame(Choreographer.java:1474)
+	at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:1994)
+	at android.os.Handler.handleCallback(Handler.java:1012)
+	at android.os.Handler.dispatchMessage(Handler.java:113)
+	at android.os.Looper.loopOnce(Looper.java:249)
+	at android.os.Looper.loop(Looper.java:339)
+	at android.app.ActivityThread.main(ActivityThread.java:9785)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:618)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1022)
+
+
+[2026-08-14 11:15:56.508 Uid(value=10255):9946:9946 E/AndroidRuntime]
+FATAL EXCEPTION: main
+Process: com.motivawall, PID: 9946
+java.lang.IllegalStateException: Given component holder class com.motivawall.app.MainActivity does not implement class y1.e or interface G1.a
+	at j1.y.x(SourceFile:65)
+	at D1.b.d(SourceFile:3)
+	at y1.h.a(SourceFile:179)
+	at y1.a.h(SourceFile:1166)
+	at G.c.h(SourceFile:52)
+	at i0.j0.a(SourceFile:70)
+	at I.u.h(SourceFile:344)
+	at G.c.h(SourceFile:52)
+	at z.d.b(SourceFile:150)
+	at i0.k0.a(SourceFile:309)
+	at i0.N.h(SourceFile:32)
+	at G.c.h(SourceFile:52)
+	at z.d.b(SourceFile:150)
+	at i0.S.a(SourceFile:611)
+	at i0.i1.h(SourceFile:242)
+	at G.c.h(SourceFile:52)
+	at z.d.a(SourceFile:233)
+	at i0.i1.h(SourceFile:213)
+	at G.c.h(SourceFile:52)
+	at z.d.C(SourceFile:15)
+	at z.o.n(SourceFile:203)
+	at z.s.k(SourceFile:32)
+	at z.o0.a(SourceFile:45)
+	at z.s.l(SourceFile:9)
+	at z.s.d(SourceFile:3)
+	at R.K.j(SourceFile:203)
+	at i0.t.setOnViewTreeOwnersAvailable(SourceFile:7)
+	at i0.j1.d(SourceFile:9)
+	at i0.j1.i(SourceFile:19)
+	at androidx.lifecycle.u.a(SourceFile:23)
+	at androidx.lifecycle.v.a(SourceFile:216)
+	at R.K.j(SourceFile:172)
+	at i0.t.onAttachedToWindow(SourceFile:120)
+	at android.view.View.dispatchAttachedToWindow(View.java:23246)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3582)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:4089)
+	at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:3473)
+	at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:11900)
+	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:2011)
+	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:2020)
+	at android.view.Choreographer.doCallbacks(Choreographer.java:1583)
+	at android.view.Choreographer.doFrame(Choreographer.java:1474)
+	at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:1994)
+	at android.os.Handler.handleCallback(Handler.java:1012)
+	at android.os.Handler.dispatchMessage(Handler.java:113)
+	at android.os.Looper.loopOnce(Looper.java:249)
+	at android.os.Looper.loop(Looper.java:339)
+	at android.app.ActivityThread.main(ActivityThread.java:9785)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:618)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1022)
+
+
+[2026-08-14 11:15:58.896 Uid(value=10255):9996:9996 E/AndroidRuntime]
+FATAL EXCEPTION: main
+Process: com.motivawall, PID: 9996
+java.lang.IllegalStateException: Given component holder class com.motivawall.app.MainActivity does not implement class y1.e or interface G1.a
+	at j1.y.x(SourceFile:65)
+	at D1.b.d(SourceFile:3)
+	at y1.h.a(SourceFile:179)
+	at y1.a.h(SourceFile:1166)
+	at G.c.h(SourceFile:52)
+	at i0.j0.a(SourceFile:70)
+	at I.u.h(SourceFile:344)
+	at G.c.h(SourceFile:52)
+	at z.d.b(SourceFile:150)
+	at i0.k0.a(SourceFile:309)
+	at i0.N.h(SourceFile:32)
+	at G.c.h(SourceFile:52)
+	at z.d.b(SourceFile:150)
+	at i0.S.a(SourceFile:611)
+	at i0.i1.h(SourceFile:242)
+	at G.c.h(SourceFile:52)
+	at z.d.a(SourceFile:233)
+	at i0.i1.h(SourceFile:213)
+	at G.c.h(SourceFile:52)
+	at z.d.C(SourceFile:15)
+	at z.o.n(SourceFile:203)
+	at z.s.k(SourceFile:32)
+	at z.o0.a(SourceFile:45)
+	at z.s.l(SourceFile:9)
+	at z.s.d(SourceFile:3)
+	at R.K.j(SourceFile:203)
+	at i0.t.setOnViewTreeOwnersAvailable(SourceFile:7)
+	at i0.j1.d(SourceFile:9)
+	at i0.j1.i(SourceFile:19)
+	at androidx.lifecycle.u.a(SourceFile:23)
+	at androidx.lifecycle.v.a(SourceFile:216)
+	at R.K.j(SourceFile:172)
+	at i0.t.onAttachedToWindow(SourceFile:120)
+	at android.view.View.dispatchAttachedToWindow(View.java:23246)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3582)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:4089)
+	at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:3473)
+	at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:11900)
+	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:2011)
+	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:2020)
+	at android.view.Choreographer.doCallbacks(Choreographer.java:1583)
+	at android.view.Choreographer.doFrame(Choreographer.java:1474)
+	at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:1994)
+	at android.os.Handler.handleCallback(Handler.java:1012)
+	at android.os.Handler.dispatchMessage(Handler.java:113)
+	at android.os.Looper.loopOnce(Looper.java:249)
+	at android.os.Looper.loop(Looper.java:339)
+	at android.app.ActivityThread.main(ActivityThread.java:9785)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:618)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1022)
+
+
+[2026-08-14 11:16:02.267 Uid(value=10255):10045:10045 E/AndroidRuntime]
+FATAL EXCEPTION: main
+Process: com.motivawall, PID: 10045
+java.lang.IllegalStateException: Given component holder class com.motivawall.app.MainActivity does not implement class y1.e or interface G1.a
+	at j1.y.x(SourceFile:65)
+	at D1.b.d(SourceFile:3)
+	at y1.h.a(SourceFile:179)
+	at y1.a.h(SourceFile:1166)
+	at G.c.h(SourceFile:52)
+	at i0.j0.a(SourceFile:70)
+	at I.u.h(SourceFile:344)
+	at G.c.h(SourceFile:52)
+	at z.d.b(SourceFile:150)
+	at i0.k0.a(SourceFile:309)
+	at i0.N.h(SourceFile:32)
+	at G.c.h(SourceFile:52)
+	at z.d.b(SourceFile:150)
+	at i0.S.a(SourceFile:611)
+	at i0.i1.h(SourceFile:242)
+	at G.c.h(SourceFile:52)
+	at z.d.a(SourceFile:233)
+	at i0.i1.h(SourceFile:213)
+	at G.c.h(SourceFile:52)
+	at z.d.C(SourceFile:15)
+	at z.o.n(SourceFile:203)
+	at z.s.k(SourceFile:32)
+	at z.o0.a(SourceFile:45)
+	at z.s.l(SourceFile:9)
+	at z.s.d(SourceFile:3)
+	at R.K.j(SourceFile:203)
+	at i0.t.setOnViewTreeOwnersAvailable(SourceFile:7)
+	at i0.j1.d(SourceFile:9)
+	at i0.j1.i(SourceFile:19)
+	at androidx.lifecycle.u.a(SourceFile:23)
+	at androidx.lifecycle.v.a(SourceFile:216)
+	at R.K.j(SourceFile:172)
+	at i0.t.onAttachedToWindow(SourceFile:120)
+	at android.view.View.dispatchAttachedToWindow(View.java:23246)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3582)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:4089)
+	at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:3473)
+	at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:11900)
+	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:2011)
+	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:2020)
+	at android.view.Choreographer.doCallbacks(Choreographer.java:1583)
+	at android.view.Choreographer.doFrame(Choreographer.java:1474)
+	at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:1994)
+	at android.os.Handler.handleCallback(Handler.java:1012)
+	at android.os.Handler.dispatchMessage(Handler.java:113)
+	at android.os.Looper.loopOnce(Looper.java:249)
+	at android.os.Looper.loop(Looper.java:339)
+	at android.app.ActivityThread.main(ActivityThread.java:9785)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:618)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1022)
+
+
+[2026-08-14 11:22:17.058 Uid(value=10255):13398:13415 I/DisplayManager]
+Choreographer implicitly registered for the refresh rate.
+
+
+[2026-08-14 11:22:17.068 Uid(value=10255):13398:13398 W/LgsiSystemBarColor]
+Load SystemBar Policy config file /system/etc/lgsi_systembarcolor_config.xml OK!
+
+
+[2026-08-14 11:22:17.069 Uid(value=10255):13398:13398 W/LgsiSystemBarColor]
+Couldn't find or open file /product/etc/lgsi_systembarcolor_config.xml
+
+
+[2026-08-14 11:22:17.155 Uid(value=10255):13398:13398 D/ActivityThread]
+startAppLockIfNeeded is called
+
+
+[2026-08-14 11:22:17.183 Uid(value=10255):13398:13398 D/SystemServiceRegistry]
+ zuiHandwriting new zuihandwritingmanager
+
+
+[2026-08-14 11:22:17.298 Uid(value=10255):13398:13398 E/AndroidRuntime]
+FATAL EXCEPTION: main
+Process: com.motivawall, PID: 13398
+java.lang.IllegalStateException: Given component holder class com.motivawall.app.MainActivity does not implement class y1.e or interface G1.a
+	at j1.y.x(SourceFile:65)
+	at D1.b.d(SourceFile:3)
+	at y1.h.a(SourceFile:179)
+	at y1.a.h(SourceFile:1166)
+	at G.c.h(SourceFile:52)
+	at i0.j0.a(SourceFile:70)
+	at I.u.h(SourceFile:344)
+	at G.c.h(SourceFile:52)
+	at z.d.b(SourceFile:150)
+	at i0.k0.a(SourceFile:309)
+	at i0.N.h(SourceFile:32)
+	at G.c.h(SourceFile:52)
+	at z.d.b(SourceFile:150)
+	at i0.S.a(SourceFile:611)
+	at i0.i1.h(SourceFile:242)
+	at G.c.h(SourceFile:52)
+	at z.d.a(SourceFile:233)
+	at i0.i1.h(SourceFile:213)
+	at G.c.h(SourceFile:52)
+	at z.d.C(SourceFile:15)
+	at z.o.n(SourceFile:203)
+	at z.s.k(SourceFile:32)
+	at z.o0.a(SourceFile:45)
+	at z.s.l(SourceFile:9)
+	at z.s.d(SourceFile:3)
+	at R.K.j(SourceFile:203)
+	at i0.t.setOnViewTreeOwnersAvailable(SourceFile:7)
+	at i0.j1.d(SourceFile:9)
+	at i0.j1.i(SourceFile:19)
+	at androidx.lifecycle.u.a(SourceFile:23)
+	at androidx.lifecycle.v.a(SourceFile:216)
+	at R.K.j(SourceFile:172)
+	at i0.t.onAttachedToWindow(SourceFile:120)
+	at android.view.View.dispatchAttachedToWindow(View.java:23246)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3582)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:4089)
+	at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:3473)
+	at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:11900)
+	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:2011)
+	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:2020)
+	at android.view.Choreographer.doCallbacks(Choreographer.java:1583)
+	at android.view.Choreographer.doFrame(Choreographer.java:1474)
+	at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:1994)
+	at android.os.Handler.handleCallback(Handler.java:1012)
+	at android.os.Handler.dispatchMessage(Handler.java:113)
+	at android.os.Looper.loopOnce(Looper.java:249)
+	at android.os.Looper.loop(Looper.java:339)
+	at android.app.ActivityThread.main(ActivityThread.java:9785)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:618)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1022)
+
+
+[2026-08-14 11:22:36.445 Uid(value=10255):13522:13544 I/DisplayManager]
+Choreographer implicitly registered for the refresh rate.
+
+
+[2026-08-14 11:22:36.493 Uid(value=10255):13522:13522 W/LgsiSystemBarColor]
+Load SystemBar Policy config file /system/etc/lgsi_systembarcolor_config.xml OK!
+
+
+[2026-08-14 11:22:36.494 Uid(value=10255):13522:13522 W/LgsiSystemBarColor]
+Couldn't find or open file /product/etc/lgsi_systembarcolor_config.xml
+
+
+[2026-08-14 11:22:36.633 Uid(value=10255):13522:13522 D/ActivityThread]
+startAppLockIfNeeded is called
+
+
+[2026-08-14 11:22:36.676 Uid(value=10255):13522:13522 D/SystemServiceRegistry]
+ zuiHandwriting new zuihandwritingmanager
+
+
+[2026-08-14 11:22:36.795 Uid(value=10255):13522:13522 E/AndroidRuntime]
+FATAL EXCEPTION: main
+Process: com.motivawall, PID: 13522
+java.lang.IllegalStateException: Given component holder class com.motivawall.app.MainActivity does not implement class y1.e or interface G1.a
+	at j1.y.x(SourceFile:65)
+	at D1.b.d(SourceFile:3)
+	at y1.h.a(SourceFile:179)
+	at y1.a.h(SourceFile:1166)
+	at G.c.h(SourceFile:52)
+	at i0.j0.a(SourceFile:70)
+	at I.u.h(SourceFile:344)
+	at G.c.h(SourceFile:52)
+	at z.d.b(SourceFile:150)
+	at i0.k0.a(SourceFile:309)
+	at i0.N.h(SourceFile:32)
+	at G.c.h(SourceFile:52)
+	at z.d.b(SourceFile:150)
+	at i0.S.a(SourceFile:611)
+	at i0.i1.h(SourceFile:242)
+	at G.c.h(SourceFile:52)
+	at z.d.a(SourceFile:233)
+	at i0.i1.h(SourceFile:213)
+	at G.c.h(SourceFile:52)
+	at z.d.C(SourceFile:15)
+	at z.o.n(SourceFile:203)
+	at z.s.k(SourceFile:32)
+	at z.o0.a(SourceFile:45)
+	at z.s.l(SourceFile:9)
+	at z.s.d(SourceFile:3)
+	at R.K.j(SourceFile:203)
+	at i0.t.setOnViewTreeOwnersAvailable(SourceFile:7)
+	at i0.j1.d(SourceFile:9)
+	at i0.j1.i(SourceFile:19)
+	at androidx.lifecycle.u.a(SourceFile:23)
+	at androidx.lifecycle.v.a(SourceFile:216)
+	at R.K.j(SourceFile:172)
+	at i0.t.onAttachedToWindow(SourceFile:120)
+	at android.view.View.dispatchAttachedToWindow(View.java:23246)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3582)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:4089)
+	at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:3473)
+	at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:11900)
+	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:2011)
+	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:2020)
+	at android.view.Choreographer.doCallbacks(Choreographer.java:1583)
+	at android.view.Choreographer.doFrame(Choreographer.java:1474)
+	at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:1994)
+	at android.os.Handler.handleCallback(Handler.java:1012)
+	at android.os.Handler.dispatchMessage(Handler.java:113)
+	at android.os.Looper.loopOnce(Looper.java:249)
+	at android.os.Looper.loop(Looper.java:339)
+	at android.app.ActivityThread.main(ActivityThread.java:9785)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:618)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1022)
+
+
+[2026-08-14 11:22:38.771 Uid(value=10255):13576:13598 I/DisplayManager]
+Choreographer implicitly registered for the refresh rate.
+
+
+[2026-08-14 11:22:38.791 Uid(value=10255):13576:13576 W/LgsiSystemBarColor]
+Load SystemBar Policy config file /system/etc/lgsi_systembarcolor_config.xml OK!
+
+
+[2026-08-14 11:22:38.791 Uid(value=10255):13576:13576 W/LgsiSystemBarColor]
+Couldn't find or open file /product/etc/lgsi_systembarcolor_config.xml
+
+
+[2026-08-14 11:22:38.912 Uid(value=10255):13576:13576 D/ActivityThread]
+startAppLockIfNeeded is called
+
+
+[2026-08-14 11:22:38.968 Uid(value=10255):13576:13576 D/SystemServiceRegistry]
+ zuiHandwriting new zuihandwritingmanager
+
+
+[2026-08-14 11:22:39.099 Uid(value=10255):13576:13576 E/AndroidRuntime]
+FATAL EXCEPTION: main
+Process: com.motivawall, PID: 13576
+java.lang.IllegalStateException: Given component holder class com.motivawall.app.MainActivity does not implement class y1.e or interface G1.a
+	at j1.y.x(SourceFile:65)
+	at D1.b.d(SourceFile:3)
+	at y1.h.a(SourceFile:179)
+	at y1.a.h(SourceFile:1166)
+	at G.c.h(SourceFile:52)
+	at i0.j0.a(SourceFile:70)
+	at I.u.h(SourceFile:344)
+	at G.c.h(SourceFile:52)
+	at z.d.b(SourceFile:150)
+	at i0.k0.a(SourceFile:309)
+	at i0.N.h(SourceFile:32)
+	at G.c.h(SourceFile:52)
+	at z.d.b(SourceFile:150)
+	at i0.S.a(SourceFile:611)
+	at i0.i1.h(SourceFile:242)
+	at G.c.h(SourceFile:52)
+	at z.d.a(SourceFile:233)
+	at i0.i1.h(SourceFile:213)
+	at G.c.h(SourceFile:52)
+	at z.d.C(SourceFile:15)
+	at z.o.n(SourceFile:203)
+	at z.s.k(SourceFile:32)
+	at z.o0.a(SourceFile:45)
+	at z.s.l(SourceFile:9)
+	at z.s.d(SourceFile:3)
+	at R.K.j(SourceFile:203)
+	at i0.t.setOnViewTreeOwnersAvailable(SourceFile:7)
+	at i0.j1.d(SourceFile:9)
+	at i0.j1.i(SourceFile:19)
+	at androidx.lifecycle.u.a(SourceFile:23)
+	at androidx.lifecycle.v.a(SourceFile:216)
+	at R.K.j(SourceFile:172)
+	at i0.t.onAttachedToWindow(SourceFile:120)
+	at android.view.View.dispatchAttachedToWindow(View.java:23246)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3582)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3589)
+	at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:4089)
+	at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:3473)
+	at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:11900)
+	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:2011)
+	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:2020)
+	at android.view.Choreographer.doCallbacks(Choreographer.java:1583)
+	at android.view.Choreographer.doFrame(Choreographer.java:1474)
+	at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:1994)
+	at android.os.Handler.handleCallback(Handler.java:1012)
+	at android.os.Handler.dispatchMessage(Handler.java:113)
+	at android.os.Looper.loopOnce(Looper.java:249)
+	at android.os.Looper.loop(Looper.java:339)
+	at android.app.ActivityThread.main(ActivityThread.java:9785)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:618)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1022)
+

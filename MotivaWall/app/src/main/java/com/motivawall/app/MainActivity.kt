@@ -113,9 +113,11 @@ import com.motivawall.app.core.ImageEdits
 import com.motivawall.app.core.HistoryTransfer
 import com.motivawall.app.core.WallpaperTarget
 import com.motivawall.app.data.WallpaperHistory
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
