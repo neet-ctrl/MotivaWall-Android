@@ -1,0 +1,8 @@
+<resources>
+    <color name="midnight">#0A0A1A</color>
+    <color name="surface_dark">#1A1A2E</color>
+    <color name="purple">#6C63FF</color>
+    <color name="purple_deep">#3F3D9E</color>
+    <color name="coral">#FF6B6B</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

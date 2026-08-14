@@ -1,0 +1,1 @@
+# MotivaWall keeps release shrinking off so local PDF and bitmap code stays transparent.

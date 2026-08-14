@@ -1,0 +1,771 @@
+🔒 LOCK SCREEN PDF CONTROLS - ADD-ON PROMPT
+
+Copy and paste this entire section into your existing Replit Agent prompt:
+
+---
+
+ADD-ON: LOCK SCREEN FLOATING CONTROL DIALOG FOR PDF WALLPAPER
+
+FEATURE OVERVIEW
+
+When user sets a PDF as wallpaper, a premium floating control dialog appears on the lock screen that allows manual page navigation WITHOUT unlocking the phone.
+
+---
+
+1. FLOATING CONTROL DIALOG ON LOCK SCREEN
+
+Design Specification:
+
+```
+┌─────────────────────────────────────────────┐
+│  🔒 LOCK SCREEN                            │
+│                                              │
+│  [PDF Page - Current Wallpaper]            │
+│                                              │
+│  ┌──────────────────────────────────┐       │
+│  │  📄 PDF Wallpaper Controls      │       │  ← Floating Dialog (Glassmorphism)
+│  │  ┌────────────────────────────┐ │       │
+│  │  │  📖 Page 3 of 20          │ │       │  ← Page indicator
+│  │  │  ════════════════════════ │ │       │
+│  │  │  ⬅️  Previous  │  Next ➡️ │ │       │  ← Navigation buttons
+│  │  │  [📌 Page 3/20]          │ │       │
+│  │  └────────────────────────────┘ │       │
+│  │  🔄 Auto: On  ⏱️ 10s          │ │       │  ← Status info
+│  │  [⏸️ Pause]  [🎯 Settings]     │ │       │  ← Additional controls
+│  └──────────────────────────────────┘       │
+│                                              │
+│  Swipe up to unlock                         │
+└─────────────────────────────────────────────┘
+```
+
+Visual Style:
+
+· Glassmorphism Effect: Frosted glass background with blur
+· Rounded Corners: 20dp corner radius
+· Soft Shadow: Subtle elevation
+· Animated: Smooth fade-in and slide-up animation
+· Semi-transparent: 80% opacity background
+· Premium Gradient: #6C63FF to #3F3D9E accent
+
+---
+
+2. COMPONENTS OF THE FLOATING DIALOG
+
+A. Page Indicator Section
+
+```kotlin
+// Shows current page progress
+- Current Page: "3" (Large, bold)
+- Total Pages: "20" (Small, muted)
+- Progress Bar: Horizontal progress indicator
+- Page Title: "Chapter 2: Getting Started" (if available)
+```
+
+B. Navigation Controls
+
+```kotlin
+// Main navigation buttons
+- ⬅️ Previous Button: Large, rounded, with haptic feedback
+- ➡️ Next Button: Large, rounded, with haptic feedback
+- Both buttons have ripple effect on tap
+- Disabled state when at first/last page
+```
+
+C. Status Information
+
+```kotlin
+// Auto-rotation status
+- 🔄 Auto-Rotate: On/Off indicator
+- ⏱️ Interval: Current rotation interval (e.g., "10s")
+- 📊 Progress: "3 of 20 pages"
+```
+
+D. Additional Controls
+
+```kotlin
+// Extra controls
+- ⏸️ Pause/Resume: Toggle auto-rotation
+- 🎯 Settings: Quick access to PDF settings
+- ❌ Close: Hide dialog (reappears on notification tap)
+```
+
+---
+
+3. IMPLEMENTATION CODE
+
+A. Floating Dialog Service
+
+```kotlin
+class PDFLockScreenDialogService : Service() {
+    
+    private lateinit var windowManager: WindowManager
+    private lateinit var floatingView: View
+    private var currentPage = 0
+    private var totalPages = 0
+    private var isAutoRotate = true
+    private var isDialogVisible = true
+    
+    companion object {
+        const val ACTION_NEXT = "NEXT_PAGE"
+        const val ACTION_PREV = "PREV_PAGE"
+        const val ACTION_PAUSE = "PAUSE_AUTO"
+        const val ACTION_CLOSE = "CLOSE_DIALOG"
+        const val EXTRA_PAGE = "current_page"
+        const val EXTRA_TOTAL = "total_pages"
+    }
+    
+    override fun onCreate() {
+        super.onCreate()
+        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        createFloatingDialog()
+        
+        // Register broadcast receiver for control actions
+        registerReceiver(controlReceiver, IntentFilter().apply {
+            addAction(ACTION_NEXT)
+            addAction(ACTION_PREV)
+            addAction(ACTION_PAUSE)
+            addAction(ACTION_CLOSE)
+        })
+    }
+    
+    private fun createFloatingDialog() {
+        // Inflate the floating dialog layout
+        floatingView = LayoutInflater.from(this).inflate(
+            R.layout.dialog_lock_screen_pdf_controls, 
+            null
+        )
+        
+        // Setup dialog parameters
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            else
+                WindowManager.LayoutParams.TYPE_PHONE,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+            WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or
+            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+            y = 100 // 100dp from bottom
+            width = (resources.displayMetrics.widthPixels * 0.9).toInt() // 90% of screen width
+        }
+        
+        // Add view to window
+        windowManager.addView(floatingView, params)
+        
+        // Setup UI elements
+        setupUI()
+        
+        // Animate show
+        animateShow()
+    }
+    
+    private fun setupUI() {
+        // Page indicator
+        val tvPageNumber = floatingView.findViewById<TextView>(R.id.tv_page_number)
+        val tvTotalPages = floatingView.findViewById<TextView>(R.id.tv_total_pages)
+        val progressBar = floatingView.findViewById<ProgressBar>(R.id.progress_bar)
+        val tvPageTitle = floatingView.findViewById<TextView>(R.id.tv_page_title)
+        
+        // Buttons
+        val btnPrevious = floatingView.findViewById<ImageButton>(R.id.btn_previous)
+        val btnNext = floatingView.findViewById<ImageButton>(R.id.btn_next)
+        val btnPause = floatingView.findViewById<ImageButton>(R.id.btn_pause)
+        val btnSettings = floatingView.findViewById<ImageButton>(R.id.btn_settings)
+        val btnClose = floatingView.findViewById<ImageButton>(R.id.btn_close)
+        
+        // Update UI with current data
+        updateUI(currentPage, totalPages)
+        
+        // Set click listeners
+        btnPrevious.setOnClickListener {
+            if (currentPage > 0) {
+                currentPage--
+                updateWallpaper(currentPage)
+                updateUI(currentPage, totalPages)
+                showPageIndicator("Page ${currentPage + 1}/$totalPages")
+                vibrate()
+            }
+        }
+        
+        btnNext.setOnClickListener {
+            if (currentPage < totalPages - 1) {
+                currentPage++
+                updateWallpaper(currentPage)
+                updateUI(currentPage, totalPages)
+                showPageIndicator("Page ${currentPage + 1}/$totalPages")
+                vibrate()
+            }
+        }
+        
+        btnPause.setOnClickListener {
+            isAutoRotate = !isAutoRotate
+            btnPause.setImageResource(
+                if (isAutoRotate) R.drawable.ic_pause 
+                else R.drawable.ic_play
+            )
+            updateWallpaperService(isAutoRotate)
+            showPageIndicator(if (isAutoRotate) "Auto-Rotate: ON" else "Auto-Rotate: PAUSED")
+        }
+        
+        btnSettings.setOnClickListener {
+            // Open PDF settings dialog
+            showPDFSettingsDialog()
+        }
+        
+        btnClose.setOnClickListener {
+            hideDialog()
+        }
+        
+        // Make dialog draggable
+        makeDraggable(floatingView)
+    }
+    
+    private fun updateUI(page: Int, total: Int) {
+        val tvPageNumber = floatingView.findViewById<TextView>(R.id.tv_page_number)
+        val tvTotalPages = floatingView.findViewById<TextView>(R.id.tv_total_pages)
+        val progressBar = floatingView.findViewById<ProgressBar>(R.id.progress_bar)
+        
+        tvPageNumber.text = "${page + 1}"
+        tvTotalPages.text = "of $total"
+        progressBar.max = total
+        progressBar.progress = page + 1
+        
+        // Update page title if available
+        val tvPageTitle = floatingView.findViewById<TextView>(R.id.tv_page_title)
+        // Fetch page title from PDF metadata
+    }
+    
+    private fun updateWallpaper(page: Int) {
+        // Update the actual lock screen wallpaper to new page
+        val pdfPath = getPDFPath()
+        setPDFWallpaper(pdfPath, page)
+        
+        // Broadcast to update notification
+        sendBroadcast(Intent("UPDATE_WALLPAPER").apply {
+            putExtra(EXTRA_PAGE, page)
+        })
+    }
+    
+    private fun showPageIndicator(message: String) {
+        // Create temporary overlay showing page number
+        val overlay = LayoutInflater.from(this).inflate(
+            R.layout.overlay_page_indicator, 
+            null
+        )
+        overlay.findViewById<TextView>(R.id.tv_indicator).text = message
+        
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            else
+                WindowManager.LayoutParams.TYPE_PHONE,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.CENTER
+        }
+        
+        windowManager.addView(overlay, params)
+        
+        // Remove after 2 seconds
+        Handler(Looper.getMainLooper()).postDelayed({
+            try {
+                windowManager.removeView(overlay)
+            } catch (e: Exception) {
+                // View already removed
+            }
+        }, 2000)
+    }
+    
+    private fun makeDraggable(view: View) {
+        var initialX = 0
+        var initialY = 0
+        var initialTouchX = 0f
+        var initialTouchY = 0f
+        
+        view.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    initialX = (view.layoutParams as WindowManager.LayoutParams).x
+                    initialY = (view.layoutParams as WindowManager.LayoutParams).y
+                    initialTouchX = event.rawX
+                    initialTouchY = event.rawY
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    val params = view.layoutParams as WindowManager.LayoutParams
+                    params.x = initialX + (event.rawX - initialTouchX).toInt()
+                    params.y = initialY + (event.rawY - initialTouchY).toInt()
+                    windowManager.updateViewLayout(view, params)
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+    
+    private fun animateShow() {
+        floatingView.apply {
+            translationY = 200f
+            alpha = 0f
+            animate()
+                .translationY(0f)
+                .alpha(1f)
+                .setDuration(500)
+                .setInterpolator(DecelerateInterpolator())
+                .start()
+        }
+    }
+    
+    private fun animateHide() {
+        floatingView.apply {
+            animate()
+                .translationY(200f)
+                .alpha(0f)
+                .setDuration(300)
+                .setInterpolator(AccelerateInterpolator())
+                .withEndAction {
+                    windowManager.removeView(floatingView)
+                }
+                .start()
+        }
+    }
+    
+    private fun hideDialog() {
+        isDialogVisible = false
+        animateHide()
+        // Show notification to reopen
+        showReopenNotification()
+    }
+    
+    private fun showReopenNotification() {
+        // Notification to bring back the dialog
+        val intent = Intent(this, PDFLockScreenDialogService::class.java)
+        intent.action = "SHOW_DIALOG"
+        val pendingIntent = PendingIntent.getService(
+            this, 0, intent, 
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        
+        val notification = NotificationCompat.Builder(this, "pdf_control_channel")
+            .setContentTitle("📄 PDF Controls Hidden")
+            .setContentText("Tap to show controls on lock screen")
+            .setSmallIcon(R.drawable.ic_pdf)
+            .setContentIntent(pendingIntent)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .build()
+        
+        val manager = getSystemService(NotificationManager::class.java)
+        manager.notify(1001, notification)
+    }
+    
+    private fun vibrate() {
+        val vibrator = getSystemService(VIBRATOR_SERVICE) as Vibrator
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            vibrator.vibrate(50)
+        }
+    }
+    
+    private val controlReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.action) {
+                "SHOW_DIALOG" -> {
+                    if (!isDialogVisible) {
+                        isDialogVisible = true
+                        createFloatingDialog()
+                    }
+                }
+                "UPDATE_PAGE" -> {
+                    currentPage = intent.getIntExtra(EXTRA_PAGE, 0)
+                    totalPages = intent.getIntExtra(EXTRA_TOTAL, 20)
+                    updateUI(currentPage, totalPages)
+                }
+            }
+        }
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            windowManager.removeView(floatingView)
+        } catch (e: Exception) {
+            // View already removed
+        }
+        unregisterReceiver(controlReceiver)
+    }
+}
+```
+
+---
+
+B. Layout XML Files
+
+1. dialog_lock_screen_pdf_controls.xml
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="20dp"
+    app:cardBackgroundColor="@color/glass_bg">
+    
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+        
+        <!-- Header -->
+        <LinearLayout
+            android:id="@+id/header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            app:layout_constraintTop_toTopOf="parent">
+            
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="📄 PDF Controls"
+                android:textSize="18sp"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:fontFamily="@font/poppins_semibold"/>
+            
+            <ImageButton
+                android:id="@+id/btn_close"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_close"
+                android:background="@drawable/button_glass"
+                android:padding="6dp"/>
+        </LinearLayout>
+        
+        <!-- Page Indicator -->
+        <LinearLayout
+            android:id="@+id/page_indicator"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="12dp"
+            app:layout_constraintTop_toBottomOf="@id/header">
+            
+            <TextView
+                android:id="@+id/tv_page_number"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="3"
+                android:textSize="36sp"
+                android:textColor="@color/accent"
+                android:textStyle="bold"
+                android:fontFamily="@font/poppins_bold"/>
+            
+            <TextView
+                android:id="@+id/tv_total_pages"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" of 20"
+                android:textSize="16sp"
+                android:textColor="@color/white_60"
+                android:layout_marginStart="4dp"/>
+        </LinearLayout>
+        
+        <!-- Progress Bar -->
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:layout_marginTop="8dp"
+            android:progressTint="@color/accent"
+            android:progressBackgroundTint="@color/white_20"
+            app:layout_constraintTop_toBottomOf="@id/page_indicator"/>
+        
+        <!-- Page Title -->
+        <TextView
+            android:id="@+id/tv_page_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Chapter 2: Getting Started"
+            android:textSize="14sp"
+            android:textColor="@color/white_80"
+            android:fontFamily="@font/inter_regular"
+            android:gravity="center"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/progress_bar"/>
+        
+        <!-- Navigation Buttons -->
+        <LinearLayout
+            android:id="@+id/navigation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="16dp"
+            android:paddingHorizontal="20dp"
+            app:layout_constraintTop_toBottomOf="@id/tv_page_title">
+            
+            <ImageButton
+                android:id="@+id/btn_previous"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_prev_large"
+                android:background="@drawable/button_control_glass"
+                android:padding="14dp"/>
+            
+            <View
+                android:layout_width="24dp"
+                android:layout_height="0dp"/>
+            
+            <ImageButton
+                android:id="@+id/btn_next"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_next_large"
+                android:background="@drawable/button_control_glass"
+                android:padding="14dp"/>
+        </LinearLayout>
+        
+        <!-- Bottom Controls -->
+        <LinearLayout
+            android:id="@+id/bottom_controls"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/navigation">
+            
+            <!-- Pause Button -->
+            <ImageButton
+                android:id="@+id/btn_pause"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_pause"
+                android:background="@drawable/button_control_small"
+                android:padding="8dp"/>
+            
+            <View
+                android:layout_width="16dp"
+                android:layout_height="0dp"/>
+            
+            <!-- Auto-Rotate Status -->
+            <TextView
+                android:id="@+id/tv_auto_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🔄 Auto: ON"
+                android:textSize="12sp"
+                android:textColor="@color/white_60"
+                android:fontFamily="@font/inter_regular"/>
+            
+            <View
+                android:layout_width="16dp"
+                android:layout_height="0dp"/>
+            
+            <!-- Settings Button -->
+            <ImageButton
+                android:id="@+id/btn_settings"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_settings"
+                android:background="@drawable/button_control_small"
+                android:padding="8dp"/>
+        </LinearLayout>
+        
+        <!-- Drag Handle -->
+        <View
+            android:id="@+id/drag_handle"
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:background="@drawable/drag_handle"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/bottom_controls"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+        
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.cardview.widget.CardView>
+```
+
+2. overlay_page_indicator.xml
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="10dp"
+    app:cardBackgroundColor="#CC000000">
+    
+    <TextView
+        android:id="@+id/tv_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="12dp 20dp"
+        android:text="Page 3/20"
+        android:textSize="18sp"
+        android:textColor="@color/white"
+        android:textStyle="bold"
+        android:fontFamily="@font/poppins_semibold"/>
+</androidx.cardview.widget.CardView>
+```
+
+---
+
+C. Drawable Resources
+
+1. button_control_glass.xml
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#30FFFFFF"/>
+    <corners android:radius="28dp"/>
+    <stroke 
+        android:width="1dp" 
+        android:color="#40FFFFFF"/>
+</shape>
+```
+
+2. button_control_small.xml
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#20FFFFFF"/>
+    <corners android:radius="20dp"/>
+    <stroke 
+        android:width="1dp" 
+        android:color="#30FFFFFF"/>
+</shape>
+```
+
+3. drag_handle.xml
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#40FFFFFF"/>
+    <corners android:radius="2dp"/>
+</shape>
+```
+
+---
+
+4. PERMISSIONS REQUIRED
+
+Add to AndroidManifest.xml:
+
+```xml
+<!-- For overlay on lock screen -->
+<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+<uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+
+<!-- For vibration feedback -->
+<uses-permission android:name="android.permission.VIBRATE" />
+
+<!-- Service declaration -->
+<service
+    android:name=".services.PDFLockScreenDialogService"
+    android:enabled="true"
+    android:exported="false"
+    android:foregroundServiceType="mediaProjection" />
+
+<!-- Broadcast receiver -->
+<receiver android:name=".receivers.PDFControlReceiver" />
+```
+
+---
+
+5. HOW TO START THE SERVICE
+
+When PDF is set as wallpaper:
+
+```kotlin
+private fun setPDFAsWallpaper(pdfPath: String, totalPages: Int) {
+    // Set wallpaper logic...
+    
+    // Start lock screen dialog service
+    val intent = Intent(this, PDFLockScreenDialogService::class.java)
+    intent.putExtra("PDF_PATH", pdfPath)
+    intent.putExtra("TOTAL_PAGES", totalPages)
+    intent.putExtra("START_PAGE", 0)
+    
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        startForegroundService(intent)
+    } else {
+        startService(intent)
+    }
+}
+```
+
+---
+
+6. USER INTERACTION FLOW
+
+Action Result
+PDF set as wallpaper Floating dialog appears on lock screen
+Tap ⬅️ Previous Wallpaper changes to previous page
+Tap ➡️ Next Wallpaper changes to next page
+Tap ⏸️ Pause Auto-rotation pauses
+Tap ▶️ Play Auto-rotation resumes
+Tap ❌ Close Dialog hides (notification appears to reopen)
+Tap notification Dialog reappears
+Drag handle Move dialog anywhere on screen
+Long press dialog Open settings
+
+---
+
+7. KEY FEATURES SUMMARY
+
+· ✅ Appears on lock screen - Always visible when phone is locked
+· ✅ Premium glassmorphism UI - Frosted glass effect
+· ✅ Drag to reposition - User can move anywhere
+· ✅ Haptic feedback - On every button tap
+· ✅ Page indicator - Shows current page and total
+· ✅ Auto-rotation toggle - Pause/resume from lock screen
+· ✅ Close/Reopen - Hide and show as needed
+· ✅ Progress bar - Visual page progress
+· ✅ Animated transitions - Smooth fade/slide effects
+· ✅ Works while locked - No need to unlock phone
+· ✅ Instant page change - Updates wallpaper immediately
+
+---
+
+8. TESTING CHECKLIST
+
+☐ Floating dialog appears on lock screen
+☐ Previous button works when phone is locked
+☐ Next button works when phone is locked
+☐ Page number updates correctly
+☐ Progress bar updates correctly
+☐ Pause/Resume works from lock screen
+☐ Dialog can be dragged to different positions
+☐ Dialog can be closed and reopened
+☐ Haptic feedback works
+☐ Animation is smooth
+☐ Dialog stays after screen off/on
+☐ Dialog works on all screen sizes
+☐ Dialog works in landscape mode
+
+---
+
+END OF ADD-ON: LOCK SCREEN FLOATING CONTROL DIALOG
