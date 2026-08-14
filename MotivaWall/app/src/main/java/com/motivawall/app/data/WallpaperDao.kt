@@ -33,6 +33,9 @@ interface WallpaperDao {
     @Query("SELECT * FROM schedules ORDER BY time ASC")
     fun observeSchedules(): Flow<List<WallpaperSchedule>>
 
+    @Query("SELECT * FROM schedules ORDER BY time ASC")
+    suspend fun getSchedules(): List<WallpaperSchedule>
+
     @Insert
     suspend fun insertSchedule(schedule: WallpaperSchedule): Long
 

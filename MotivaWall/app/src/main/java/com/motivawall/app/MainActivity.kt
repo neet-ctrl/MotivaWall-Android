@@ -13,10 +13,16 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateFloat
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +35,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -68,6 +75,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -83,7 +94,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -95,6 +109,7 @@ import com.motivawall.app.core.HistoryTransfer
 import com.motivawall.app.core.WallpaperTarget
 import com.motivawall.app.data.WallpaperHistory
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -123,6 +138,7 @@ fun MotivaWallApp(viewModel: MainViewModel = hiltViewModel()) {
     val setup by viewModel.setup.collectAsState()
     val history by viewModel.history.collectAsState(initial = emptyList())
     val schedules by viewModel.schedules.collectAsState(initial = emptyList())
+    val theme by viewModel.theme.collectAsState()
     var tab by remember { mutableIntStateOf(0) }
     var setupMode by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -142,9 +158,12 @@ fun MotivaWallApp(viewModel: MainViewModel = hiltViewModel()) {
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     LaunchedEffect(setup.message) { setup.message?.let { scope.launch { snackbar.showSnackbar(it) } } }
 
-    MaterialTheme(colorScheme = darkColorScheme(
-        primary = Purple, secondary = Coral, background = Midnight, surface = SurfaceDark
-    )) {
+    val colors = when {
+        theme == "Light" -> lightColorScheme(primary = Purple, secondary = Coral)
+        theme == "Dynamic" && Build.VERSION.SDK_INT >= 31 -> dynamicDarkColorScheme(context)
+        else -> darkColorScheme(primary = Purple, secondary = Coral, background = Midnight, surface = SurfaceDark)
+    }
+    MaterialTheme(colorScheme = colors) {
         Surface(Modifier.fillMaxSize(), color = Midnight) {
             Scaffold(
                 containerColor = Midnight,
@@ -174,6 +193,7 @@ fun MotivaWallApp(viewModel: MainViewModel = hiltViewModel()) {
                         onBack = { setupMode = false },
                         onEdits = viewModel::updateEdits,
                         onPage = viewModel::showPdfPage,
+                        onRange = viewModel::setPageRange,
                         onInterval = { value ->
                             val millis = when (value) {
                                 "3s" -> 3_000L
@@ -186,6 +206,9 @@ fun MotivaWallApp(viewModel: MainViewModel = hiltViewModel()) {
                             }
                             viewModel.setInterval(millis)
                         },
+                        onTransition = viewModel::setTransition,
+                        onAutoRotate = viewModel::setAutoRotate,
+                        onFavorite = viewModel::setFavorite,
                         onTarget = viewModel::setTarget,
                         onApply = viewModel::applyCurrent,
                         onOverlay = {
@@ -198,13 +221,22 @@ fun MotivaWallApp(viewModel: MainViewModel = hiltViewModel()) {
                         1 -> PdfLanding(onPick = { pdfPicker.launch(arrayOf("application/pdf")) })
                         2 -> HistoryScreen(
                             history,
-                            viewModel::toggleFavorite,
-                            viewModel::delete,
-                            viewModel::clearHistory,
+                            { item -> viewModel.toggleFavorite(item) },
+                            { item -> viewModel.delete(item) },
+                            { viewModel.clearHistory() },
                             { exportPicker.launch("motivawall-history.json") },
                             { importPicker.launch(arrayOf("application/json", "text/plain")) }
                         )
-                        else -> SettingsScreen(schedules, history, viewModel::saveSchedule, viewModel::deleteSchedule)
+                        else -> SettingsScreen(
+                            schedules,
+                            history,
+                            theme,
+                            viewModel::setTheme,
+                            { time, days, wallpaperId, label -> viewModel.saveSchedule(time, days, wallpaperId, label) },
+                            { schedule -> viewModel.toggleSchedule(schedule) },
+                            { viewModel.clearCache() },
+                            { schedule -> viewModel.deleteSchedule(schedule) }
+                        )
                     }
                 }
             }
@@ -224,7 +256,28 @@ private data class NavItem(val label: String, val icon: ImageVector)
 
 @Composable
 private fun HomeScreen(history: List<WallpaperHistory>, schedules: List<com.motivawall.app.data.WallpaperSchedule>, onImage: () -> Unit, onPdf: () -> Unit, onSetup: () -> Unit) {
-    LazyColumn(contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+    val transition = rememberInfiniteTransition(label = "home-gradient")
+    val gradientShift by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(7_000), RepeatMode.Reverse),
+        label = "gradient-shift"
+    )
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.linearGradient(
+                    listOf(
+                        Midnight,
+                        Color(0xFF18152F).copy(alpha = .75f + gradientShift * .12f),
+                        Midnight
+                    )
+                )
+            ),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp)
+    ) {
         item {
             Column {
                 Text("MOTIVAWALL", color = Coral, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
@@ -255,8 +308,16 @@ private fun HomeScreen(history: List<WallpaperHistory>, schedules: List<com.moti
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 StatCard("${history.size}", "Wallpapers", Modifier.weight(1f))
                 StatCard("${history.count { it.isFavorite }}", "Favorites", Modifier.weight(1f))
-                StatCard("${schedules.count { it.isActive }}", "Active plans", Modifier.weight(1f))
+                StatCard("${history.count { it.isPdf }}", "PDF sets", Modifier.weight(1f))
             }
+        }
+        item {
+            val mostUsed = if (history.count { it.isPdf } > history.count { !it.isPdf }) "PDF" else "Images"
+            Text(
+                "${schedules.count { it.isActive }} active plans · $mostUsed used most",
+                color = Color(0xFFB6B4C6),
+                fontSize = 13.sp
+            )
         }
         item {
             Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF24213F)), shape = RoundedCornerShape(22.dp)) {
@@ -305,13 +366,21 @@ private fun SetupScreen(
     onBack: () -> Unit,
     onEdits: (ImageEdits) -> Unit,
     onPage: (Int) -> Unit,
+    onRange: (Int, Int) -> Unit,
     onInterval: (String) -> Unit,
+    onTransition: (String) -> Unit,
+    onAutoRotate: (Boolean) -> Unit,
+    onFavorite: (Boolean) -> Unit,
     onTarget: (WallpaperTarget) -> Unit,
     onApply: () -> Unit,
     onOverlay: () -> Unit
 ) {
     val image = state.bitmap
     var edits by remember(state.source) { mutableStateOf(state.edits) }
+    var startPageText by remember(state.source) { mutableStateOf((state.pdfStartPage + 1).toString()) }
+    var endPageText by remember(state.source) { mutableStateOf((state.pdfEndPage + 1).toString()) }
+    var showPdfGrid by remember(state.source) { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
     LazyColumn(contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 28.dp)) {
         item {
             TopAppBar(
@@ -321,7 +390,23 @@ private fun SetupScreen(
             )
         }
         item {
-            Box(Modifier.fillMaxWidth().height(390.dp).padding(horizontal = 20.dp).clip(RoundedCornerShape(26.dp)).background(Color(0xFF24213F)), contentAlignment = Alignment.Center) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(390.dp)
+                    .padding(horizontal = 20.dp)
+                    .clip(RoundedCornerShape(26.dp))
+                    .background(
+                        Brush.linearGradient(listOf(Color(0xFF24213F), Color(0xFF3F3D9E).copy(alpha = .55f)))
+                    )
+                    .pointerInput(state.source, state.pdfPage) {
+                        detectHorizontalDragGestures { _, dragAmount ->
+                            if (state.isPdf && dragAmount > 40) onPage(state.pdfPage - 1)
+                            if (state.isPdf && dragAmount < -40) onPage(state.pdfPage + 1)
+                        }
+                    },
+                contentAlignment = Alignment.Center
+            ) {
                 image?.let { Image(it.asImageBitmap(), "Wallpaper preview", Modifier.fillMaxSize()) }
                     ?: Text(if (state.isPdf) "Loading PDF…" else "Choose an image to begin", color = Color(0xFFB6B4C6))
                 if (state.isPdf && state.pdfPages > 0) {
@@ -344,6 +429,69 @@ private fun SetupScreen(
             SectionTitle("Page rotation")
             ChipRow(listOf("0°", "90°", "180°", "270°"), "${state.edits.rotation}°") {
                 onEdits(state.edits.copy(rotation = it.removeSuffix("°").toInt()))
+            }
+        }
+        if (state.isPdf && state.pdfPages > 0) item {
+            SectionTitle("Page range")
+            Row(Modifier.padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                androidx.compose.material3.OutlinedTextField(
+                    value = startPageText,
+                    onValueChange = { startPageText = it.filter(Char::isDigit) },
+                    modifier = Modifier.weight(1f),
+                    label = { Text("From") }
+                )
+                androidx.compose.material3.OutlinedTextField(
+                    value = endPageText,
+                    onValueChange = { endPageText = it.filter(Char::isDigit) },
+                    modifier = Modifier.weight(1f),
+                    label = { Text("To") }
+                )
+                Button(onClick = {
+                    val start = startPageText.toIntOrNull()?.minus(1) ?: state.pdfStartPage
+                    val end = endPageText.toIntOrNull()?.minus(1) ?: state.pdfEndPage
+                    onRange(start, end)
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                }) { Text("Apply") }
+            }
+            SectionTitle("Transition")
+            ChipRow(PdfTransitionOptions, state.transition, onTransition)
+            Row(
+                Modifier.padding(horizontal = 20.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Auto-rotate", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        if (state.autoRotate) "Pages continue while the service is active" else "Set the selected page only",
+                        color = Color(0xFFB6B4C6),
+                        fontSize = 12.sp
+                    )
+                }
+                Switch(checked = state.autoRotate, onCheckedChange = onAutoRotate)
+            }
+            TextButton(onClick = { showPdfGrid = !showPdfGrid }, Modifier.padding(horizontal = 20.dp)) {
+                Text(if (showPdfGrid) "Hide page grid" else "Show page grid")
+            }
+            if (showPdfGrid) {
+                LazyRow(
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(state.pdfEndPage - state.pdfStartPage + 1) { offset ->
+                        val page = state.pdfStartPage + offset
+                        val thumbnail = rememberPdfPage(state.source, page, state.edits.rotation)
+                        thumbnail?.let {
+                            Image(
+                                it.asImageBitmap(),
+                                "Page ${page + 1}",
+                                Modifier
+                                    .size(78.dp, 110.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable { onPage(page) }
+                            )
+                        }
+                    }
+                }
             }
         }
         if (!state.isPdf) {
@@ -371,7 +519,27 @@ private fun SetupScreen(
                     androidx.compose.material3.OutlinedTextField(edits.author, { edits = edits.copy(author = it); onEdits(edits) }, Modifier.fillMaxWidth(), label = { Text("Author") })
                     ChipRow(listOf("Top", "Center", "Bottom"), edits.textPosition) { edits = edits.copy(textPosition = it); onEdits(edits) }
                     ChipRow(listOf("Small", "Medium", "Large"), edits.textSize) { edits = edits.copy(textSize = it); onEdits(edits) }
+                    ChipRow(FontOptions, edits.fontStyle) { edits = edits.copy(fontStyle = it); onEdits(edits) }
+                    ChipRow(listOf("White", "Black"), if (edits.textColor == "#000000") "Black" else "White") {
+                        edits = edits.copy(textColor = if (it == "Black") "#000000" else "#FFFFFF")
+                        onEdits(edits)
+                    }
+                    androidx.compose.material3.OutlinedTextField(
+                        value = edits.textColor,
+                        onValueChange = { edits = edits.copy(textColor = it); onEdits(edits) },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Custom text color (#RRGGBB)") }
+                    )
                 }
+            }
+        }
+        item {
+            Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Save as favorite", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    Text("Keep this setup at the top of History.", color = Color(0xFFB6B4C6), fontSize = 12.sp)
+                }
+                Switch(checked = state.favorite, onCheckedChange = onFavorite)
             }
         }
         item { SectionTitle("Apply to") }
@@ -389,6 +557,19 @@ private fun SetupScreen(
             TextButton(onClick = onOverlay, Modifier.fillMaxWidth()) { Text("Open lock-screen PDF controls") }
         }
     }
+}
+
+private val PdfTransitionOptions = listOf("Fade", "Slide", "Zoom", "Flip", "Morph")
+private val FontOptions = listOf("Sans Serif", "Serif", "Monospace", "Condensed", "Cursive")
+
+@Composable
+private fun rememberPdfPage(source: Uri?, page: Int, rotation: Int): android.graphics.Bitmap? {
+    val context = LocalContext.current
+    return androidx.compose.runtime.produceState<android.graphics.Bitmap?>(null, source, page, rotation) {
+        value = withContext(kotlinx.coroutines.Dispatchers.IO) {
+            source?.let { com.motivawall.app.core.PdfRendererUtil.renderPage(context, it, page, rotation) }
+        }
+    }.value
 }
 
 @Composable private fun SectionTitle(text: String) = Text(text, Modifier.padding(start = 20.dp, top = 22.dp, bottom = 10.dp), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
@@ -424,7 +605,14 @@ private fun HistoryScreen(
     onImport: () -> Unit
 ) {
     var filter by remember { mutableStateOf("All") }
-    val visible = history.filter { filter == "All" || (filter == "PDF") == it.isPdf }
+    val visible = history.filter {
+        when (filter) {
+            "PDF" -> it.isPdf
+            "Image" -> !it.isPdf
+            "Favorites" -> it.isFavorite
+            else -> true
+        }
+    }
     LazyColumn(contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -436,7 +624,7 @@ private fun HistoryScreen(
                 }
             }
         }
-        item { ChipRow(listOf("All", "Image", "PDF"), filter) { filter = it } }
+        item { ChipRow(listOf("All", "Image", "PDF", "Favorites"), filter) { filter = it } }
         items(visible, key = { it.id }) { item ->
             HistoryRow(item, onFavorite, onDelete)
         }
@@ -464,12 +652,17 @@ private fun HistoryScreen(
 private fun SettingsScreen(
     schedules: List<com.motivawall.app.data.WallpaperSchedule>,
     history: List<WallpaperHistory>,
+    theme: String,
+    onTheme: (String) -> Unit,
     onAddSchedule: (String, String, Long, String) -> Unit,
+    onToggleSchedule: (com.motivawall.app.data.WallpaperSchedule) -> Unit,
+    onClearCache: () -> Unit,
     onDeleteSchedule: (com.motivawall.app.data.WallpaperSchedule) -> Unit
 ) {
     var time by remember { mutableStateOf("08:00") }
     var days by remember { mutableStateOf("Daily") }
     var label by remember { mutableStateOf("Morning reset") }
+    var selectedWallpaperId by remember(history) { mutableStateOf(history.firstOrNull()?.id ?: 0L) }
     LazyColumn(contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { Text("Settings", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Bold); Text("Make the experience yours.", color = Color(0xFFB6B4C6)) }
         item {
@@ -482,8 +675,19 @@ private fun SettingsScreen(
                         androidx.compose.material3.OutlinedTextField(days, { days = it }, Modifier.weight(1f), label = { Text("Days") })
                     }
                     androidx.compose.material3.OutlinedTextField(label, { label = it }, Modifier.fillMaxWidth(), label = { Text("Label") })
+                    ChipRow(listOf("Daily", "Weekdays", "Weekends"), days) { days = it }
+                    Text("Wallpaper", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        history.forEach { item ->
+                            FilterChip(
+                                selected = item.id == selectedWallpaperId,
+                                onClick = { selectedWallpaperId = item.id },
+                                label = { Text(if (item.isPdf) "PDF ${item.pdfPageNumber ?: 1}" else "Image ${item.id}") }
+                            )
+                        }
+                    }
                     Button(
-                        onClick = { history.firstOrNull()?.let { onAddSchedule(time, days, it.id, label) } },
+                        onClick = { if (selectedWallpaperId != 0L) onAddSchedule(time, days, selectedWallpaperId, label) },
                         enabled = history.isNotEmpty(),
                         colors = ButtonDefaults.buttonColors(containerColor = Purple)
                     ) { Text(if (history.isEmpty()) "Set a wallpaper first" else "Add schedule") }
@@ -493,15 +697,36 @@ private fun SettingsScreen(
                                 Text("${schedule.time} · ${schedule.days}", color = Color.White)
                                 Text(schedule.label, color = Color(0xFFB6B4C6), fontSize = 12.sp)
                             }
+                                Switch(checked = schedule.isActive, onCheckedChange = { onToggleSchedule(schedule) })
                             TextButton(onClick = { onDeleteSchedule(schedule) }) { Text("Remove") }
                         }
                     }
                 }
             }
         }
-        item { SettingCard("Theme", "Dark midnight with dynamic accent", Icons.Default.Brightness6) }
-        item { SettingCard("Schedules", "Wallpaper moments from your storage", Icons.Default.Tune) }
-        item { SettingCard("Storage", "All source files stay on this device", Icons.Default.Home) }
+        item {
+            Card(colors = CardDefaults.cardColors(containerColor = SurfaceDark), shape = RoundedCornerShape(20.dp)) {
+                Column(Modifier.padding(18.dp)) {
+                    Text("Appearance", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text("Choose how MotivaWall should feel.", color = Color(0xFFB6B4C6), fontSize = 12.sp)
+                    Spacer(Modifier.height(10.dp))
+                    ChipRow(listOf("Dark", "Light", "Dynamic"), theme, onTheme)
+                }
+            }
+        }
+        item {
+            Card(colors = CardDefaults.cardColors(containerColor = SurfaceDark), shape = RoundedCornerShape(20.dp)) {
+                Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Home, null, tint = Purple, modifier = Modifier.size(26.dp))
+                    Spacer(Modifier.width(14.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text("Storage", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text("All source files stay on this device", color = Color(0xFFB6B4C6), fontSize = 13.sp)
+                    }
+                    TextButton(onClick = onClearCache) { Text("Clear cache") }
+                }
+            }
+        }
         item { SettingCard("About MotivaWall", "Version 1.0.0 · No ads · No downloads", Icons.Default.AutoAwesome) }
     }
 }

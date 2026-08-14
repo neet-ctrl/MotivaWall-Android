@@ -1,7 +1,6 @@
 package com.motivawall.app
 
 import android.app.Application
-import android.app.WallpaperManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -22,8 +21,6 @@ import com.motivawall.app.service.PdfLockScreenDialogService
 import com.motivawall.app.service.PdfWallpaperService
 import com.motivawall.app.service.SchedulePlanner
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.io.File
-import java.util.Calendar
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,10 +30,16 @@ import kotlinx.coroutines.launch
 data class SetupState(
     val source: Uri? = null,
     val isPdf: Boolean = false,
+    val originalBitmap: Bitmap? = null,
     val bitmap: Bitmap? = null,
     val pdfPage: Int = 0,
     val pdfPages: Int = 0,
+    val pdfStartPage: Int = 0,
+    val pdfEndPage: Int = 0,
     val intervalMs: Long = 10_000L,
+    val transition: String = "Fade",
+    val autoRotate: Boolean = true,
+    val favorite: Boolean = false,
     val edits: ImageEdits = ImageEdits(),
     val target: WallpaperTarget = WallpaperTarget.BOTH,
     val message: String? = null
@@ -49,13 +52,17 @@ class MainViewModel @Inject constructor(
 ) : AndroidViewModel(application) {
     private val _setup = MutableStateFlow(SetupState())
     val setup: StateFlow<SetupState> = _setup.asStateFlow()
+    private val _theme = MutableStateFlow(
+        application.getSharedPreferences("settings", Context.MODE_PRIVATE).getString("theme", "Dark") ?: "Dark"
+    )
+    val theme: StateFlow<String> = _theme.asStateFlow()
     val history = dao.observeHistory()
     val schedules = dao.observeSchedules()
 
     fun selectImage(uri: Uri) {
         viewModelScope.launch {
             val bitmap = ImageProcessor.decode(getApplication(), uri)
-            _setup.value = SetupState(source = uri, bitmap = bitmap)
+            _setup.value = SetupState(source = uri, originalBitmap = bitmap, bitmap = bitmap)
         }
     }
 
@@ -70,6 +77,7 @@ class MainViewModel @Inject constructor(
                 source = uri,
                 isPdf = true,
                 pdfPages = pages,
+                pdfEndPage = pages - 1,
                 bitmap = PdfRendererUtil.renderPage(getApplication(), uri, 0)
             )
         }
@@ -80,7 +88,7 @@ class MainViewModel @Inject constructor(
         val bitmap = if (state.isPdf && state.source != null) {
             PdfRendererUtil.renderPage(getApplication(), state.source, state.pdfPage, edits.rotation)
         } else {
-            state.bitmap?.let { ImageProcessor.render(it, edits) }
+            state.originalBitmap?.let { ImageProcessor.render(it, edits) }
         }
         _setup.value = state.copy(edits = edits, bitmap = bitmap)
     }
@@ -88,14 +96,34 @@ class MainViewModel @Inject constructor(
     fun showPdfPage(page: Int) {
         val state = _setup.value
         val source = state.source ?: return
+        val safePage = page.coerceIn(state.pdfStartPage, state.pdfEndPage.coerceAtLeast(state.pdfStartPage))
         _setup.value = state.copy(
-            pdfPage = page.coerceIn(0, (state.pdfPages - 1).coerceAtLeast(0)),
-            bitmap = PdfRendererUtil.renderPage(getApplication(), source, page, state.edits.rotation)
+            pdfPage = safePage,
+            bitmap = PdfRendererUtil.renderPage(getApplication(), source, safePage, state.edits.rotation)
         )
     }
 
     fun setTarget(target: WallpaperTarget) { _setup.value = _setup.value.copy(target = target) }
+    fun setTheme(theme: String) {
+        _theme.value = theme
+        getApplication<Application>().getSharedPreferences("settings", Context.MODE_PRIVATE)
+            .edit().putString("theme", theme).apply()
+    }
     fun setInterval(intervalMs: Long) { _setup.value = _setup.value.copy(intervalMs = intervalMs) }
+    fun setTransition(transition: String) { _setup.value = _setup.value.copy(transition = transition) }
+    fun setAutoRotate(autoRotate: Boolean) { _setup.value = _setup.value.copy(autoRotate = autoRotate) }
+    fun setFavorite(favorite: Boolean) { _setup.value = _setup.value.copy(favorite = favorite) }
+    fun setPageRange(start: Int, end: Int) {
+        val state = _setup.value
+        val safeStart = start.coerceIn(0, (state.pdfPages - 1).coerceAtLeast(0))
+        val safeEnd = end.coerceIn(safeStart, (state.pdfPages - 1).coerceAtLeast(safeStart))
+        _setup.value = state.copy(
+            pdfStartPage = safeStart,
+            pdfEndPage = safeEnd,
+            pdfPage = state.pdfPage.coerceIn(safeStart, safeEnd)
+        )
+        showPdfPage(_setup.value.pdfPage)
+    }
 
     fun applyCurrent() {
         viewModelScope.launch {
@@ -110,6 +138,11 @@ class MainViewModel @Inject constructor(
                     isPdf = state.isPdf,
                     pdfPageNumber = if (state.isPdf) state.pdfPage + 1 else null,
                     pdfTotalPages = if (state.isPdf) state.pdfPages else null,
+                    pdfStartPage = if (state.isPdf) state.pdfStartPage + 1 else null,
+                    pdfEndPage = if (state.isPdf) state.pdfEndPage + 1 else null,
+                    transitionEffect = state.transition,
+                    autoRotate = state.autoRotate,
+                    isFavorite = state.favorite,
                     brightness = state.edits.brightness,
                     contrast = state.edits.contrast,
                     saturation = state.edits.saturation,
@@ -122,21 +155,40 @@ class MainViewModel @Inject constructor(
                     cropRatio = state.edits.ratio
                 )
             )
-            if (state.isPdf && state.source != null) startPdfRotation(state.source, state.pdfPages)
+            if (state.isPdf && state.source != null && state.autoRotate) {
+                startPdfRotation(state)
+            } else if (state.isPdf) {
+                stopPdfRotation()
+            }
             _setup.value = state.copy(message = "Wallpaper set. Your screen is ready.")
         }
     }
 
-    private fun startPdfRotation(uri: Uri, pages: Int) {
+    private fun startPdfRotation(state: SetupState) {
+        val uri = state.source ?: return
         val prefs = getApplication<Application>().getSharedPreferences("pdf_wallpaper", Context.MODE_PRIVATE)
         prefs.edit()
             .putString("path", uri.toString())
-            .putInt("total", pages)
-            .putInt("page", _setup.value.pdfPage)
-            .putLong("interval", _setup.value.intervalMs)
+            .putInt("total", state.pdfPages)
+            .putInt("page", state.pdfPage)
+            .putInt("start", state.pdfStartPage)
+            .putInt("end", state.pdfEndPage)
+            .putInt("rotation", state.edits.rotation)
+            .putString("transition", state.transition)
+            .putBoolean("paused", false)
+            .putLong("interval", state.intervalMs)
             .apply()
         ContextCompat.startForegroundService(getApplication(), Intent(getApplication(), PdfWallpaperService::class.java))
         ContextCompat.startForegroundService(getApplication(), Intent(getApplication(), PdfLockScreenDialogService::class.java))
+    }
+
+    private fun stopPdfRotation() {
+        getApplication<Application>().startService(
+            Intent(getApplication(), PdfWallpaperService::class.java).setAction(PdfWallpaperService.ACTION_STOP)
+        )
+        getApplication<Application>().startService(
+            Intent(getApplication(), PdfLockScreenDialogService::class.java).setAction(PdfLockScreenDialogService.ACTION_CLOSE)
+        )
     }
 
     fun toggleFavorite(item: WallpaperHistory) = viewModelScope.launch { dao.update(item.copy(isFavorite = !item.isFavorite)) }
@@ -150,6 +202,21 @@ class MainViewModel @Inject constructor(
     fun deleteSchedule(schedule: WallpaperSchedule) = viewModelScope.launch {
         SchedulePlanner.cancel(getApplication(), schedule)
         dao.deleteSchedule(schedule)
+    }
+    fun toggleSchedule(schedule: WallpaperSchedule) = viewModelScope.launch {
+        val next = schedule.copy(isActive = !schedule.isActive)
+        if (next.isActive) {
+            dao.findById(schedule.wallpaperId)?.let { source ->
+                SchedulePlanner.schedule(getApplication(), next, source.sourcePath, source.isPdf)
+            }
+        } else {
+            SchedulePlanner.cancel(getApplication(), schedule)
+        }
+        dao.updateSchedule(next)
+    }
+    fun clearCache() = viewModelScope.launch {
+        getApplication<Application>().cacheDir.deleteRecursively()
+        getApplication<Application>().cacheDir.mkdirs()
     }
 
     fun importHistory(json: String) = viewModelScope.launch {

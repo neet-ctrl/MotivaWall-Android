@@ -17,7 +17,9 @@ object AppModule {
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): MotivaDatabase =
-        Room.databaseBuilder(context, MotivaDatabase::class.java, "motivawall.db").build()
+        Room.databaseBuilder(context, MotivaDatabase::class.java, "motivawall.db")
+            .addMigrations(MotivaDatabase.MIGRATION_1_2)
+            .build()
 
     @Provides
     fun provideWallpaperDao(database: MotivaDatabase): WallpaperDao = database.wallpaperDao()

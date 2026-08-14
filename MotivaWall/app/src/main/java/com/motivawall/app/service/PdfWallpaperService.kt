@@ -4,54 +4,91 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.app.WallpaperManager
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.motivawall.app.R
-import com.motivawall.app.core.PdfRendererUtil
-import java.io.File
+import com.motivawall.app.core.PdfTransition
+import com.motivawall.app.core.PdfWallpaperController
 
 class PdfWallpaperService : Service() {
+    companion object {
+        const val ACTION_STOP = "com.motivawall.app.STOP_PDF_ROTATION"
+    }
+
     private val prefs by lazy { getSharedPreferences("pdf_wallpaper", MODE_PRIVATE) }
     private var running = true
+    private var worker: Thread? = null
+    private var previousPage: Bitmap? = null
 
     override fun onCreate() {
         super.onCreate()
         createChannel()
         startForeground(21, notification())
-        Thread {
+        startRotation()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_STOP) stopSelf()
+        return START_STICKY
+    }
+
+    private fun startRotation() {
+        worker = Thread {
             while (running) {
                 val path = prefs.getString("path", null)
-                val page = prefs.getInt("page", 0)
                 val total = prefs.getInt("total", 0)
-                val interval = prefs.getLong("interval", 10_000L)
-                if (path != null && total > 0) {
-                    val uri = android.net.Uri.parse(path)
-                    PdfRendererUtil.renderPage(this, uri, page)?.let { bitmap ->
-                        WallpaperManager.getInstance(this).setBitmap(
-                            bitmap, null, true,
-                            WallpaperManager.FLAG_LOCK or WallpaperManager.FLAG_SYSTEM
-                        )
-                        bitmap.recycle()
-                    }
-                    val next = if (page + 1 >= total) 0 else page + 1
-                    prefs.edit().putInt("page", next).apply()
-                    sendBroadcast(Intent(PdfLockScreenDialogService.ACTION_UPDATE_PAGE).apply {
-                        setPackage(packageName)
-                        putExtra(PdfLockScreenDialogService.EXTRA_PAGE, next)
-                        putExtra(PdfLockScreenDialogService.EXTRA_TOTAL, total)
-                    })
+                val start = prefs.getInt("start", 0).coerceIn(0, (total - 1).coerceAtLeast(0))
+                val end = prefs.getInt("end", (total - 1).coerceAtLeast(0)).coerceIn(start, (total - 1).coerceAtLeast(start))
+                val interval = prefs.getLong("interval", 10_000L).coerceAtLeast(3_000L)
+                val paused = prefs.getBoolean("paused", false)
+                if (path == null || total == 0 || paused) {
+                    Thread.sleep(500L)
+                    continue
                 }
-                Thread.sleep(interval.coerceAtLeast(3_000L))
+
+                val page = prefs.getInt("page", start).coerceIn(start, end)
+                val effect = runCatching {
+                    PdfTransition.valueOf(prefs.getString("transition", PdfTransition.Fade.name) ?: PdfTransition.Fade.name)
+                }.getOrDefault(PdfTransition.Fade)
+                previousPage = PdfWallpaperController.setPage(
+                    this,
+                    android.net.Uri.parse(path),
+                    page,
+                    prefs.getInt("rotation", 0),
+                    effect,
+                    previousPage,
+                    android.app.WallpaperManager.FLAG_LOCK or android.app.WallpaperManager.FLAG_SYSTEM
+                )
+                sendPageUpdate(page, total, start, end)
+                val nextPage = if (page >= end) start else page + 1
+                prefs.edit().putInt("page", nextPage).apply()
+                var slept = 0L
+                while (running && slept < interval) {
+                    Thread.sleep(minOf(500L, interval - slept))
+                    slept += 500L
+                }
             }
-        }.start()
+        }.apply { start() }
+    }
+
+    private fun sendPageUpdate(page: Int, total: Int, start: Int, end: Int) {
+        sendBroadcast(Intent(PdfLockScreenDialogService.ACTION_UPDATE_PAGE).apply {
+            setPackage(packageName)
+            putExtra(PdfLockScreenDialogService.EXTRA_PAGE, page)
+            putExtra(PdfLockScreenDialogService.EXTRA_TOTAL, total)
+            putExtra(PdfLockScreenDialogService.EXTRA_START, start)
+            putExtra(PdfLockScreenDialogService.EXTRA_END, end)
+        })
     }
 
     override fun onDestroy() {
         running = false
+        worker?.interrupt()
+        previousPage?.recycle()
+        previousPage = null
         super.onDestroy()
     }
 

@@ -11,7 +11,6 @@ import android.graphics.Paint
 import android.graphics.RadialGradient
 import android.graphics.Shader
 import android.net.Uri
-import androidx.core.graphics.ColorUtils
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.min
@@ -98,7 +97,16 @@ object ImageProcessor {
             val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = try { Color.parseColor(edits.textColor) } catch (_: Exception) { Color.WHITE }
                 textAlign = Paint.Align.CENTER
-                typeface = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.BOLD)
+                typeface = android.graphics.Typeface.create(
+                    when (edits.fontStyle) {
+                        "Serif" -> "serif"
+                        "Monospace" -> "monospace"
+                        "Condensed" -> "sans-serif-condensed"
+                        "Cursive" -> "cursive"
+                        else -> "sans-serif"
+                    },
+                    android.graphics.Typeface.BOLD
+                )
                 textSize = when (edits.textSize) {
                     "Small" -> output.width * .045f
                     "Large" -> output.width * .085f
