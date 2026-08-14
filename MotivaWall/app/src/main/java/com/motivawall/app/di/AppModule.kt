@@ -19,6 +19,7 @@ object AppModule {
     fun provideDatabase(@ApplicationContext context: Context): MotivaDatabase =
         Room.databaseBuilder(context, MotivaDatabase::class.java, "motivawall.db")
             .addMigrations(MotivaDatabase.MIGRATION_1_2)
+            .addMigrations(MotivaDatabase.MIGRATION_2_3)
             .build()
 
     @Provides

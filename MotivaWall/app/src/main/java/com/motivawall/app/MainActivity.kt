@@ -13,14 +13,21 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -35,12 +42,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -95,11 +104,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -114,6 +126,7 @@ import com.motivawall.app.core.HistoryTransfer
 import com.motivawall.app.core.WallpaperTarget
 import com.motivawall.app.data.WallpaperHistory
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -122,7 +135,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestPermissionsIfNeeded()
-        setContent { MotivaWallApp() }
+        setContent {
+            MotivaWallApp(initialTab = if (intent.getBooleanExtra("open_settings", false)) 3 else 0)
+        }
     }
 
     private fun requestPermissionsIfNeeded() {
@@ -141,7 +156,7 @@ private val Purple = Color(0xFF6C63FF)
 private val Coral = Color(0xFFFF6B6B)
 
 @Composable
-fun MotivaWallApp(viewModel: MainViewModel = hiltViewModel()) {
+fun MotivaWallApp(initialTab: Int = 0, viewModel: MainViewModel = hiltViewModel()) {
     val setup by viewModel.setup.collectAsState()
     val history by viewModel.history.collectAsState(initial = emptyList())
     val schedules by viewModel.schedules.collectAsState(initial = emptyList())
@@ -149,8 +164,9 @@ fun MotivaWallApp(viewModel: MainViewModel = hiltViewModel()) {
     val dynamicColor by viewModel.dynamicColor.collectAsState()
     val animations by viewModel.animations.collectAsState()
     val notifications by viewModel.notifications.collectAsState()
-    var tab by remember { mutableIntStateOf(0) }
+    var tab by remember { mutableIntStateOf(initialTab.coerceIn(0, 3)) }
     var setupMode by remember { mutableStateOf(false) }
+    var showCelebration by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) {
         it?.let { uri -> rememberLocalUri(context, uri); viewModel.selectImage(uri); setupMode = true }
@@ -166,7 +182,16 @@ fun MotivaWallApp(viewModel: MainViewModel = hiltViewModel()) {
     }
     val snackbar = remember { SnackbarHostState() }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
-    LaunchedEffect(setup.message) { setup.message?.let { scope.launch { snackbar.showSnackbar(it) } } }
+    LaunchedEffect(setup.message) {
+        setup.message?.let { message ->
+            scope.launch { snackbar.showSnackbar(message) }
+            if (message.startsWith("Wallpaper set")) {
+                showCelebration = true
+                delay(1_800L)
+                showCelebration = false
+            }
+        }
+    }
 
     val colors = when {
         theme == "Light" -> lightColorScheme(primary = Purple, secondary = Coral)
@@ -175,89 +200,112 @@ fun MotivaWallApp(viewModel: MainViewModel = hiltViewModel()) {
         else -> darkColorScheme(primary = Purple, secondary = Coral, background = Midnight, surface = SurfaceDark)
     }
     MaterialTheme(colorScheme = colors) {
-        Surface(Modifier.fillMaxSize(), color = Midnight) {
-            Scaffold(
-                containerColor = Midnight,
-                snackbarHost = { SnackbarHost(snackbar) },
-                bottomBar = {
-                    if (!setupMode) NavigationBar(containerColor = SurfaceDark) {
-                        val items = listOf(
-                            NavItem("Home", Icons.Default.Home),
-                            NavItem("PDF", Icons.Default.Description),
-                            NavItem("History", Icons.Default.Favorite),
-                            NavItem("Settings", Icons.Default.Settings)
-                        )
-                        items.forEachIndexed { index, item ->
-                            NavigationBarItem(
-                                selected = tab == index,
-                                onClick = { tab = index },
-                                icon = { Icon(item.icon, item.label) },
-                                label = { Text(item.label) }
+        Box(Modifier.fillMaxSize()) {
+            Surface(Modifier.fillMaxSize(), color = colors.background) {
+                Scaffold(
+                    containerColor = colors.background,
+                    snackbarHost = { SnackbarHost(snackbar) },
+                    bottomBar = {
+                        if (!setupMode) NavigationBar(containerColor = colors.surface) {
+                            val items = listOf(
+                                NavItem("Home", Icons.Default.Home),
+                                NavItem("PDF", Icons.Default.Description),
+                                NavItem("History", Icons.Default.Favorite),
+                                NavItem("Settings", Icons.Default.Settings)
+                            )
+                            items.forEachIndexed { index, item ->
+                                NavigationBarItem(
+                                    selected = tab == index,
+                                    onClick = { tab = index },
+                                    icon = { Icon(item.icon, item.label) },
+                                    label = { Text(item.label) }
+                                )
+                            }
+                        }
+                    }
+                ) { padding ->
+                    AnimatedContent(
+                        setupMode to tab,
+                        modifier = Modifier.padding(padding),
+                        transitionSpec = {
+                            (fadeIn(tween(240)) + scaleIn(initialScale = .98f)) togetherWith
+                                (fadeOut(tween(180)) + scaleOut(targetScale = .98f))
+                        },
+                        label = "page"
+                    ) { (editing, selected) ->
+                        if (editing) SetupScreen(
+                            state = setup,
+                            onBack = { setupMode = false },
+                            onEdits = viewModel::updateEdits,
+                            onPage = viewModel::showPdfPage,
+                            onRange = viewModel::setPageRange,
+                            onInterval = { value ->
+                                val millis = when (value) {
+                                    "3s" -> 3_000L
+                                    "5s" -> 5_000L
+                                    "10s" -> 10_000L
+                                    "30s" -> 30_000L
+                                    "1m" -> 60_000L
+                                    "5m" -> 300_000L
+                                    else -> 600_000L
+                                }
+                                viewModel.setInterval(millis)
+                            },
+                            onTransition = viewModel::setTransition,
+                            onAutoRotate = viewModel::setAutoRotate,
+                            onLoop = viewModel::setLoopPdf,
+                            onFavorite = viewModel::setFavorite,
+                            onTarget = viewModel::setTarget,
+                            onApply = viewModel::applyCurrent,
+                            onOverlay = {
+                                if (Settings.canDrawOverlays(context)) {
+                                    ContextCompat.startForegroundService(context, Intent(context, com.motivawall.app.service.PdfLockScreenDialogService::class.java))
+                                } else context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}")))
+                            }
+                        ) else when (selected) {
+                            0 -> HomeScreen(
+                                history,
+                                schedules,
+                                onImage = { imagePicker.launch(arrayOf("image/*")) },
+                                onPdf = { pdfPicker.launch(arrayOf("application/pdf")) },
+                                onSetup = { setupMode = true }
+                            )
+                            1 -> PdfLanding(onPick = { pdfPicker.launch(arrayOf("application/pdf")) })
+                            2 -> HistoryScreen(
+                                history,
+                                { item -> viewModel.toggleFavorite(item) },
+                                { item -> viewModel.delete(item) },
+                                { viewModel.clearHistory() },
+                                { exportPicker.launch("motivawall-history.json") },
+                                { importPicker.launch(arrayOf("application/json", "text/plain")) }
+                            )
+                            else -> SettingsScreen(
+                                schedules,
+                                history,
+                                theme,
+                                viewModel::setTheme,
+                                dynamicColor,
+                                viewModel::setDynamicColor,
+                                animations,
+                                viewModel::setAnimations,
+                                notifications,
+                                viewModel::setNotifications,
+                                { time, days, wallpaperId, label -> viewModel.saveSchedule(time, days, wallpaperId, label) },
+                                { schedule -> viewModel.toggleSchedule(schedule) },
+                                { viewModel.clearCache() },
+                                { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:")).apply { putExtra(Intent.EXTRA_SUBJECT, "MotivaWall feedback") }, "Send feedback")) },
+                                { schedule -> viewModel.deleteSchedule(schedule) }
                             )
                         }
                     }
                 }
-            ) { padding ->
-                AnimatedContent(setupMode to tab, modifier = Modifier.padding(padding), label = "page") { (editing, selected) ->
-                    if (editing) SetupScreen(
-                        state = setup,
-                        onBack = { setupMode = false },
-                        onEdits = viewModel::updateEdits,
-                        onPage = viewModel::showPdfPage,
-                        onRange = viewModel::setPageRange,
-                        onInterval = { value ->
-                            val millis = when (value) {
-                                "3s" -> 3_000L
-                                "5s" -> 5_000L
-                                "10s" -> 10_000L
-                                "30s" -> 30_000L
-                                "1m" -> 60_000L
-                                "5m" -> 300_000L
-                                else -> 600_000L
-                            }
-                            viewModel.setInterval(millis)
-                        },
-                        onTransition = viewModel::setTransition,
-                            onAutoRotate = viewModel::setAutoRotate,
-                            onLoop = viewModel::setLoopPdf,
-                        onFavorite = viewModel::setFavorite,
-                        onTarget = viewModel::setTarget,
-                        onApply = viewModel::applyCurrent,
-                        onOverlay = {
-                            if (Settings.canDrawOverlays(context)) {
-                                ContextCompat.startForegroundService(context, Intent(context, com.motivawall.app.service.PdfLockScreenDialogService::class.java))
-                            } else context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}")))
-                        }
-                    ) else when (selected) {
-                        0 -> HomeScreen(history, schedules, onImage = { imagePicker.launch(arrayOf("image/*")) }, onPdf = { pdfPicker.launch(arrayOf("application/pdf")) }, onSetup = { setupMode = true })
-                        1 -> PdfLanding(onPick = { pdfPicker.launch(arrayOf("application/pdf")) })
-                        2 -> HistoryScreen(
-                            history,
-                            { item -> viewModel.toggleFavorite(item) },
-                            { item -> viewModel.delete(item) },
-                            { viewModel.clearHistory() },
-                            { exportPicker.launch("motivawall-history.json") },
-                            { importPicker.launch(arrayOf("application/json", "text/plain")) }
-                        )
-                        else -> SettingsScreen(
-                            schedules,
-                            history,
-                            theme,
-                            viewModel::setTheme,
-                            dynamicColor,
-                            viewModel::setDynamicColor,
-                            animations,
-                            viewModel::setAnimations,
-                            notifications,
-                            viewModel::setNotifications,
-                            { time, days, wallpaperId, label -> viewModel.saveSchedule(time, days, wallpaperId, label) },
-                            { schedule -> viewModel.toggleSchedule(schedule) },
-                            { viewModel.clearCache() },
-                            { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:")).apply { putExtra(Intent.EXTRA_SUBJECT, "MotivaWall feedback") }, "Send feedback")) },
-                            { schedule -> viewModel.deleteSchedule(schedule) }
-                        )
-                    }
-                }
+            }
+            AnimatedVisibility(
+                visible = showCelebration,
+                enter = fadeIn(tween(180)),
+                exit = fadeOut(tween(300))
+            ) {
+                CelebrationOverlay()
             }
         }
     }
@@ -274,8 +322,145 @@ private fun rememberLocalUri(context: android.content.Context, uri: Uri) {
 private data class NavItem(val label: String, val icon: ImageVector)
 
 @Composable
+private fun CurrentWallpaperCard(item: WallpaperHistory?, listState: LazyListState) {
+    val bitmap = remember(item?.thumbnailPath) {
+        item?.thumbnailPath?.let(android.graphics.BitmapFactory::decodeFile)
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(250.dp)
+            .graphicsLayer {
+                translationY = -listState.firstVisibleItemScrollOffset * .12f
+            }
+            .clip(RoundedCornerShape(28.dp))
+            .shadow(20.dp, RoundedCornerShape(28.dp), ambientColor = Purple.copy(alpha = .2f))
+            .background(
+                Brush.linearGradient(
+                    listOf(Color(0xFF2D285A), Color(0xFF15132B))
+                )
+            )
+    ) {
+        bitmap?.let {
+            Image(
+                bitmap = it.asImageBitmap(),
+                contentDescription = "Current wallpaper preview",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color.Transparent, Color(0xD20A0A1A))
+                    )
+                )
+        )
+        Column(
+            Modifier
+                .align(Alignment.BottomStart)
+                .padding(20.dp)
+        ) {
+            Text(
+                if (item == null) "Your wallpaper, your way" else "Current wallpaper",
+                color = Coral,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.2.sp
+            )
+            Text(
+                item?.textOverlay?.takeIf { it.isNotBlank() } ?: "Make every glance count.",
+                color = Color.White,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2
+            )
+            Text(
+                if (item == null) "Choose a local image or PDF to get started" else "Saved locally on this device",
+                color = Color(0xFFD0CEE0),
+                fontSize = 12.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun QuoteOfTheDayCard() {
+    val quotes = listOf(
+        "Small steps still move you forward.",
+        "Make the next choice your strongest one.",
+        "Consistency turns intention into momentum.",
+        "You do not need a perfect day to make progress."
+    )
+    val dayIndex = (System.currentTimeMillis() / 86_400_000L).toInt().mod(quotes.size)
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(12.dp, RoundedCornerShape(22.dp), ambientColor = Coral.copy(alpha = .12f)),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF30294A).copy(alpha = .9f)),
+        shape = RoundedCornerShape(22.dp)
+    ) {
+        Column(Modifier.padding(18.dp)) {
+            Text("QUOTE OF THE DAY", color = Coral, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp)
+            Spacer(Modifier.height(8.dp))
+            Text("“${quotes[dayIndex]}”", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(5.dp))
+            Text("A little momentum for today.", color = Color(0xFFB6B4C6), fontSize = 12.sp)
+        }
+    }
+}
+
+@Composable
+private fun CelebrationOverlay() {
+    val transition = rememberInfiniteTransition(label = "celebration")
+    val progress by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(1_200), RepeatMode.Restart),
+        label = "celebration-progress"
+    )
+    val particles = remember {
+        listOf(
+            Triple(.12f, .52f, Purple),
+            Triple(.22f, .38f, Coral),
+            Triple(.34f, .58f, Color(0xFFFFD166)),
+            Triple(.48f, .32f, Purple),
+            Triple(.62f, .55f, Coral),
+            Triple(.76f, .4f, Color(0xFFFFD166)),
+            Triple(.88f, .58f, Purple)
+        )
+    }
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Canvas(Modifier.fillMaxSize()) {
+            particles.forEachIndexed { index, (x, y, color) ->
+                val drift = ((index % 3) - 1) * 42f
+                drawCircle(
+                    color = color.copy(alpha = (1f - progress).coerceIn(.1f, 1f)),
+                    radius = 5f + (index % 3) * 2f,
+                    center = androidx.compose.ui.geometry.Offset(
+                        size.width * x + drift * progress,
+                        size.height * (y - .18f * progress)
+                    )
+                )
+            }
+        }
+        Card(
+            colors = CardDefaults.cardColors(containerColor = SurfaceDark.copy(alpha = .94f)),
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier.shadow(24.dp, RoundedCornerShape(24.dp), ambientColor = Coral.copy(alpha = .3f))
+        ) {
+            Text("Wallpaper set", Modifier.padding(horizontal = 28.dp, vertical = 18.dp), color = Color.White, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
 private fun HomeScreen(history: List<WallpaperHistory>, schedules: List<com.motivawall.app.data.WallpaperSchedule>, onImage: () -> Unit, onPdf: () -> Unit, onSetup: () -> Unit) {
     val transition = rememberInfiniteTransition(label = "home-gradient")
+    val listState = rememberLazyListState()
+    val latest = history.firstOrNull()
     val gradientShift by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
@@ -283,6 +468,7 @@ private fun HomeScreen(history: List<WallpaperHistory>, schedules: List<com.moti
         label = "gradient-shift"
     )
     LazyColumn(
+        state = listState,
         modifier = Modifier
             .fillMaxSize()
             .background(
@@ -298,15 +484,26 @@ private fun HomeScreen(history: List<WallpaperHistory>, schedules: List<com.moti
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
         item {
-            Column {
+            Column(
+                modifier = Modifier.graphicsLayer {
+                    translationY = -listState.firstVisibleItemScrollOffset * .08f
+                }
+            ) {
                 Text("MOTIVAWALL", color = Coral, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
                 Text("Your screen.\nYour momentum.", color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.Bold, lineHeight = 38.sp)
                 Spacer(Modifier.height(8.dp))
                 Text("Transform local images and PDFs into daily inspiration.", color = Color(0xFFB6B4C6), fontSize = 15.sp)
             }
         }
+        item { CurrentWallpaperCard(latest, listState) }
+        item { QuoteOfTheDayCard() }
         item {
-            Card(colors = CardDefaults.cardColors(containerColor = SurfaceDark), shape = RoundedCornerShape(28.dp)) {
+            Card(
+                modifier = Modifier
+                    .shadow(16.dp, RoundedCornerShape(28.dp), ambientColor = Purple.copy(alpha = .14f), spotColor = Purple.copy(alpha = .18f)),
+                colors = CardDefaults.cardColors(containerColor = SurfaceDark.copy(alpha = .92f)),
+                shape = RoundedCornerShape(28.dp)
+            ) {
                 Column(Modifier.padding(22.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.AutoAwesome, null, tint = Purple)
@@ -317,6 +514,13 @@ private fun HomeScreen(history: List<WallpaperHistory>, schedules: List<com.moti
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         QuickAction("Image", Icons.Default.Image, onImage, Modifier.weight(1f))
                         QuickAction("PDF", Icons.Default.Description, onPdf, Modifier.weight(1f))
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        QuickAction("Crop", Icons.Default.Tune, onImage, Modifier.weight(1f))
+                        QuickAction("Rotate", Icons.Default.Brightness6, onImage, Modifier.weight(1f))
+                        QuickAction("Adjust", Icons.Default.Tune, onImage, Modifier.weight(1f))
+                        QuickAction("Text", Icons.Default.AutoAwesome, onImage, Modifier.weight(1f))
                     }
                 }
             }
@@ -337,6 +541,35 @@ private fun HomeScreen(history: List<WallpaperHistory>, schedules: List<com.moti
                 color = Color(0xFFB6B4C6),
                 fontSize = 13.sp
             )
+        }
+        if (schedules.any { it.isActive }) item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF24213F)),
+                shape = RoundedCornerShape(22.dp),
+                modifier = Modifier.shadow(12.dp, RoundedCornerShape(22.dp), ambientColor = Coral.copy(alpha = .12f))
+            ) {
+                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Coming up", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                    schedules.filter { it.isActive }.take(3).forEach { schedule ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(Coral.copy(alpha = .16f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.Brightness6, null, tint = Coral, modifier = Modifier.size(17.dp))
+                            }
+                            Spacer(Modifier.width(10.dp))
+                            Column {
+                                Text(schedule.label, color = Color.White, fontWeight = FontWeight.SemiBold)
+                                Text("${schedule.time} · ${schedule.days}", color = Color(0xFFB6B4C6), fontSize = 12.sp)
+                            }
+                        }
+                    }
+                }
+            }
         }
         item {
             Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF24213F)), shape = RoundedCornerShape(22.dp)) {
@@ -509,21 +742,41 @@ private fun SetupScreen(
                 Text(if (showPdfGrid) "Hide page grid" else "Show page grid")
             }
             if (showPdfGrid) {
-                LazyRow(
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(4),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(245.dp)
+                        .padding(horizontal = 20.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(state.pdfEndPage - state.pdfStartPage + 1) { offset ->
-                        val page = state.pdfStartPage + offset
+                    gridItems((state.pdfStartPage..state.pdfEndPage).toList()) { page ->
                         val thumbnail = rememberPdfPage(state.source, page, state.edits.rotation)
-                        thumbnail?.let {
-                            Image(
-                                it.asImageBitmap(),
-                                "Page ${page + 1}",
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(110.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { onPage(page) }
+                        ) {
+                            thumbnail?.let {
+                                Image(
+                                    it.asImageBitmap(),
+                                    "Page ${page + 1}",
+                                    Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } ?: ShimmerPlaceholder(Modifier.fillMaxSize())
+                            Text(
+                                "${page + 1}",
                                 Modifier
-                                    .size(78.dp, 110.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .clickable { onPage(page) }
+                                    .align(Alignment.BottomEnd)
+                                    .padding(6.dp),
+                                color = Color.White,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
@@ -637,6 +890,17 @@ private fun rememberPdfPage(source: Uri?, page: Int, rotation: Int): android.gra
         options.forEach { FilterChip(selected = selected == it, onClick = { onSelected(it) }, label = { Text(it) }) }
     }
 }
+@Composable
+private fun ShimmerPlaceholder(modifier: Modifier = Modifier) {
+    val transition = rememberInfiniteTransition(label = "shimmer")
+    val alpha by transition.animateFloat(
+        initialValue = .35f,
+        targetValue = .75f,
+        animationSpec = infiniteRepeatable(tween(900), RepeatMode.Reverse),
+        label = "shimmer-alpha"
+    )
+    Box(modifier.background(Purple.copy(alpha = alpha)))
+}
 @Composable private fun AdjustSlider(label: String, value: Int, onValue: (Int) -> Unit) {
     Column(Modifier.padding(horizontal = 20.dp, vertical = 4.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(label, color = Color(0xFFB6B4C6)); Text("$value%", color = Purple) }
@@ -644,7 +908,16 @@ private fun rememberPdfPage(source: Uri?, page: Int, rotation: Int): android.gra
     }
 }
 @Composable private fun QuickAction(text: String, icon: ImageVector, onClick: () -> Unit, modifier: Modifier) {
-    Button(onClick, modifier.height(78.dp).then(modifier), colors = ButtonDefaults.buttonColors(containerColor = Purple.copy(.25f)), shape = RoundedCornerShape(18.dp)) {
+    val haptic = LocalHapticFeedback.current
+    Button(
+        onClick = {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            onClick()
+        },
+        modifier = Modifier.height(78.dp).then(modifier),
+        colors = ButtonDefaults.buttonColors(containerColor = Purple.copy(.25f)),
+        shape = RoundedCornerShape(18.dp)
+    ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) { Icon(icon, null); Text(text) }
     }
 }
@@ -694,6 +967,26 @@ private fun HistoryScreen(
         }
         item(span = { GridItemSpan(2) }) {
             ChipRow(listOf("All", "Image", "PDF", "Favorites"), filter) { filter = it }
+        }
+        item(span = { GridItemSpan(2) }) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(12.dp, RoundedCornerShape(20.dp), ambientColor = Purple.copy(alpha = .14f)),
+                colors = CardDefaults.cardColors(containerColor = SurfaceDark.copy(alpha = .9f)),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    StatCard("${history.size}", "Total", Modifier.weight(1f))
+                    StatCard("${history.count { it.isFavorite }}", "Favorites", Modifier.weight(1f))
+                    StatCard("${history.count { it.isPdf }}", "PDF sets", Modifier.weight(1f))
+                }
+            }
         }
         gridItems(visible, key = { it.id }) { item -> HistoryTile(item, onFavorite, onDelete) }
         if (visible.isEmpty()) {

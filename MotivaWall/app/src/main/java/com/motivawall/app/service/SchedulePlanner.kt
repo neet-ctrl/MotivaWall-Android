@@ -23,6 +23,15 @@ object SchedulePlanner {
             putExtra("days", schedule.days)
             putExtra("path", sourcePath)
             putExtra("isPdf", isPdf)
+            putExtra("pdfPageNumber", schedule.pdfPageNumber ?: 1)
+            putExtra("pdfTotalPages", schedule.pdfTotalPages ?: 1)
+            putExtra("pdfStartPage", schedule.pdfStartPage ?: 0)
+            putExtra("pdfEndPage", schedule.pdfEndPage ?: ((schedule.pdfTotalPages ?: 1) - 1))
+            putExtra("pdfRotation", schedule.pdfRotation)
+            putExtra("transitionEffect", schedule.transitionEffect)
+            putExtra("autoRotate", schedule.autoRotate)
+            putExtra("loopPdf", schedule.loopPdf)
+            putExtra("intervalMs", schedule.intervalMs)
         }
         val pending = PendingIntent.getBroadcast(
             context,

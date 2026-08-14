@@ -18,8 +18,11 @@ object HistoryTransfer {
                 put("pdfTotalPages", item.pdfTotalPages)
                 put("pdfStartPage", item.pdfStartPage)
                 put("pdfEndPage", item.pdfEndPage)
+                put("pdfRotation", item.pdfRotation)
                 put("transitionEffect", item.transitionEffect)
                 put("autoRotate", item.autoRotate)
+                put("loopPdf", item.loopPdf)
+                put("intervalMs", item.intervalMs)
                 put("brightness", item.brightness)
                 put("contrast", item.contrast)
                 put("saturation", item.saturation)
@@ -52,8 +55,11 @@ object HistoryTransfer {
                         pdfTotalPages = item.optIntOrNull("pdfTotalPages"),
                         pdfStartPage = item.optIntOrNull("pdfStartPage"),
                         pdfEndPage = item.optIntOrNull("pdfEndPage"),
+                        pdfRotation = item.optInt("pdfRotation", 0),
                         transitionEffect = item.optString("transitionEffect", "Fade"),
                         autoRotate = item.optBoolean("autoRotate"),
+                        loopPdf = item.optBoolean("loopPdf", true),
+                        intervalMs = item.optLong("intervalMs", 10_000L),
                         brightness = item.optInt("brightness", 50),
                         contrast = item.optInt("contrast", 50),
                         saturation = item.optInt("saturation", 50),

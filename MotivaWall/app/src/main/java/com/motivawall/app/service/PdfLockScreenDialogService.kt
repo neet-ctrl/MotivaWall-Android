@@ -154,6 +154,7 @@ class PdfLockScreenDialogService : Service() {
             addView(actionButton("Settings") {
                 startActivity(
                     Intent(this@PdfLockScreenDialogService, MainActivity::class.java)
+                        .putExtra("open_settings", true)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 )
             }, weightedParams())

@@ -15,8 +15,11 @@ data class WallpaperHistory(
     val pdfTotalPages: Int? = null,
     val pdfStartPage: Int? = null,
     val pdfEndPage: Int? = null,
+    val pdfRotation: Int = 0,
     val transitionEffect: String = "Fade",
     val autoRotate: Boolean = false,
+    val loopPdf: Boolean = true,
+    val intervalMs: Long = 10_000L,
     val brightness: Int = 50,
     val contrast: Int = 50,
     val saturation: Int = 50,
@@ -37,5 +40,15 @@ data class WallpaperSchedule(
     val days: String,
     val wallpaperId: Long,
     val isActive: Boolean = true,
-    val label: String = "Wallpaper moment"
+    val label: String = "Wallpaper moment",
+    val isPdf: Boolean = false,
+    val pdfPageNumber: Int? = null,
+    val pdfTotalPages: Int? = null,
+    val pdfStartPage: Int? = null,
+    val pdfEndPage: Int? = null,
+    val pdfRotation: Int = 0,
+    val transitionEffect: String = "Fade",
+    val autoRotate: Boolean = false,
+    val loopPdf: Boolean = true,
+    val intervalMs: Long = 10_000L
 )

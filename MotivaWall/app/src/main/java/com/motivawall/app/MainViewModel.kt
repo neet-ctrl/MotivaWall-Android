@@ -69,35 +69,49 @@ class MainViewModel @Inject constructor(
 
     fun selectImage(uri: Uri) {
         viewModelScope.launch {
-            val bitmap = ImageProcessor.decode(getApplication(), uri)
-            _setup.value = SetupState(source = uri, originalBitmap = bitmap, bitmap = bitmap)
+            val bitmap = runCatching { ImageProcessor.decode(getApplication(), uri) }.getOrNull()
+            _setup.value = if (bitmap == null) {
+                SetupState(message = "This image could not be opened. Choose another local image.")
+            } else {
+                SetupState(source = uri, originalBitmap = bitmap, bitmap = bitmap)
+            }
         }
     }
 
     fun selectPdf(uri: Uri) {
         viewModelScope.launch {
-            val pages = PdfRendererUtil.pageCount(getApplication(), uri)
+            val pages = runCatching { PdfRendererUtil.pageCount(getApplication(), uri) }.getOrDefault(0)
+            if (pages == 0) {
+                _setup.value = SetupState(message = "This PDF could not be opened. Choose another local PDF.")
+                return@launch
+            }
             if (pages !in 1..100) {
                 _setup.value = SetupState(message = "Choose a PDF with 1–100 pages.")
                 return@launch
             }
+            val preview = runCatching {
+                PdfRendererUtil.renderPage(getApplication(), uri, 0)
+            }.getOrNull()
             _setup.value = SetupState(
                 source = uri,
                 isPdf = true,
                 pdfPages = pages,
                 pdfEndPage = pages - 1,
-                bitmap = PdfRendererUtil.renderPage(getApplication(), uri, 0)
+                bitmap = preview,
+                message = if (preview == null) "The PDF opened, but its first page could not be rendered." else null
             )
         }
     }
 
     fun updateEdits(edits: ImageEdits) {
         val state = _setup.value
-        val bitmap = if (state.isPdf && state.source != null) {
-            PdfRendererUtil.renderPage(getApplication(), state.source, state.pdfPage, edits.rotation)
-        } else {
-            state.originalBitmap?.let { ImageProcessor.render(it, edits) }
-        }
+        val bitmap = runCatching {
+            if (state.isPdf && state.source != null) {
+                PdfRendererUtil.renderPage(getApplication(), state.source, state.pdfPage, edits.rotation)
+            } else {
+                state.originalBitmap?.let { ImageProcessor.render(it, edits) }
+            }
+        }.getOrNull()
         _setup.value = state.copy(edits = edits, bitmap = bitmap)
     }
 
@@ -107,7 +121,9 @@ class MainViewModel @Inject constructor(
         val safePage = page.coerceIn(state.pdfStartPage, state.pdfEndPage.coerceAtLeast(state.pdfStartPage))
         _setup.value = state.copy(
             pdfPage = safePage,
-            bitmap = PdfRendererUtil.renderPage(getApplication(), source, safePage, state.edits.rotation)
+            bitmap = runCatching {
+                PdfRendererUtil.renderPage(getApplication(), source, safePage, state.edits.rotation)
+            }.getOrNull()
         )
     }
 
@@ -149,38 +165,46 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val state = _setup.value
             val bitmap = state.bitmap ?: return@launch
-            WallpaperApplier.apply(getApplication(), bitmap, state.target)
-            val stored = ImageProcessor.save(getApplication(), bitmap)
-            dao.insert(
-                WallpaperHistory(
-                    sourcePath = state.source?.toString().orEmpty(),
-                    thumbnailPath = stored.absolutePath,
-                    isPdf = state.isPdf,
-                    pdfPageNumber = if (state.isPdf) state.pdfPage + 1 else null,
-                    pdfTotalPages = if (state.isPdf) state.pdfPages else null,
-                    pdfStartPage = if (state.isPdf) state.pdfStartPage + 1 else null,
-                    pdfEndPage = if (state.isPdf) state.pdfEndPage + 1 else null,
-                    transitionEffect = state.transition,
-                    autoRotate = state.autoRotate,
-                    isFavorite = state.favorite,
-                    brightness = state.edits.brightness,
-                    contrast = state.edits.contrast,
-                    saturation = state.edits.saturation,
-                    vignette = state.edits.vignette,
-                    textOverlay = state.edits.quote,
-                    textAuthor = state.edits.author,
-                    textColor = state.edits.textColor,
-                    textSize = state.edits.textSize,
-                    textPosition = state.edits.textPosition,
-                    cropRatio = state.edits.ratio
+            runCatching {
+                WallpaperApplier.apply(getApplication(), bitmap, state.target)
+                val stored = ImageProcessor.save(getApplication(), bitmap)
+                dao.insert(
+                    WallpaperHistory(
+                        sourcePath = state.source?.toString().orEmpty(),
+                        thumbnailPath = stored.absolutePath,
+                        isPdf = state.isPdf,
+                        pdfPageNumber = if (state.isPdf) state.pdfPage + 1 else null,
+                        pdfTotalPages = if (state.isPdf) state.pdfPages else null,
+                        pdfStartPage = if (state.isPdf) state.pdfStartPage + 1 else null,
+                        pdfEndPage = if (state.isPdf) state.pdfEndPage + 1 else null,
+                        pdfRotation = if (state.isPdf) state.edits.rotation else 0,
+                        transitionEffect = state.transition,
+                        autoRotate = state.autoRotate,
+                        loopPdf = state.loopPdf,
+                        intervalMs = state.intervalMs,
+                        isFavorite = state.favorite,
+                        brightness = state.edits.brightness,
+                        contrast = state.edits.contrast,
+                        saturation = state.edits.saturation,
+                        vignette = state.edits.vignette,
+                        textOverlay = state.edits.quote,
+                        textAuthor = state.edits.author,
+                        textColor = state.edits.textColor,
+                        textSize = state.edits.textSize,
+                        textPosition = state.edits.textPosition,
+                        cropRatio = state.edits.ratio
+                    )
                 )
-            )
-            if (state.isPdf && state.source != null && state.autoRotate) {
-                startPdfRotation(state)
-            } else if (state.isPdf) {
-                stopPdfRotation()
+                if (state.isPdf && state.source != null && state.autoRotate) {
+                    startPdfRotation(state)
+                } else if (state.isPdf) {
+                    stopPdfRotation()
+                }
+            }.onSuccess {
+                _setup.value = state.copy(message = "Wallpaper set. Your screen is ready.")
+            }.onFailure {
+                _setup.value = state.copy(message = "Wallpaper could not be applied on this device. Check wallpaper permissions and try again.")
             }
-            _setup.value = state.copy(message = "Wallpaper set. Your screen is ready.")
         }
     }
 
@@ -218,8 +242,24 @@ class MainViewModel @Inject constructor(
     fun clearHistory() = viewModelScope.launch { dao.clear() }
     fun saveSchedule(time: String, days: String, wallpaperId: Long, label: String) = viewModelScope.launch {
         val source = dao.findById(wallpaperId) ?: return@launch
-        val id = dao.insertSchedule(WallpaperSchedule(time = time, days = days, wallpaperId = wallpaperId, label = label))
-        SchedulePlanner.schedule(getApplication(), WallpaperSchedule(id, time, days, wallpaperId, true, label), source.sourcePath, source.isPdf)
+        val draft = WallpaperSchedule(
+            time = time,
+            days = days,
+            wallpaperId = wallpaperId,
+            label = label,
+            isPdf = source.isPdf,
+            pdfPageNumber = source.pdfPageNumber,
+            pdfTotalPages = source.pdfTotalPages,
+            pdfStartPage = source.pdfStartPage,
+            pdfEndPage = source.pdfEndPage,
+            pdfRotation = source.pdfRotation,
+            transitionEffect = source.transitionEffect,
+            autoRotate = source.autoRotate,
+            loopPdf = source.loopPdf,
+            intervalMs = source.intervalMs
+        )
+        val id = dao.insertSchedule(draft)
+        SchedulePlanner.schedule(getApplication(), draft.copy(id = id), source.sourcePath, source.isPdf)
     }
     fun deleteSchedule(schedule: WallpaperSchedule) = viewModelScope.launch {
         SchedulePlanner.cancel(getApplication(), schedule)
